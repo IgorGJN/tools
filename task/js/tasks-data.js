@@ -62,6 +62,16 @@ const TaskStore = (function () {
     return "task-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
+  function normalizeInterval(value) {
+    const num = Number(value);
+
+    if (!Number.isFinite(num) || num < 1) {
+      return 1;
+    }
+
+    return Math.floor(num);
+  }
+
   function createTask(payload) {
     const tasks = load();
     const now = new Date().toISOString();
@@ -77,7 +87,11 @@ const TaskStore = (function () {
       createdAt: now,
       updatedAt: now,
       deleted: false,
-      deletedAt: ""
+      deletedAt: "",
+      recurring: payload.recurring === true,
+      recurrenceType: payload.recurring ? String(payload.recurrenceType || "weekly") : "",
+      recurrenceInterval: payload.recurring ? normalizeInterval(payload.recurrenceInterval) : 1,
+      parentTaskId: String(payload.parentTaskId || "")
     };
 
     tasks.push(task);
@@ -103,6 +117,9 @@ const TaskStore = (function () {
       date: String(payload.date || "").trim(),
       time: String(payload.time || "").trim(),
       hashtags: normalizeHashtags(payload.hashtags || ""),
+      recurring: payload.recurring === true,
+      recurrenceType: payload.recurring ? String(payload.recurrenceType || "weekly") : "",
+      recurrenceInterval: payload.recurring ? normalizeInterval(payload.recurrenceInterval) : 1,
       updatedAt: new Date().toISOString()
     };
 
@@ -131,6 +148,123 @@ const TaskStore = (function () {
     return tasks[index];
   }
 
+  function addDays(dateString, amount) {
+    const parts = dateString.split("-");
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    date.setDate(date.getDate() + amount);
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return year + "-" + month + "-" + day;
+  }
+
+  function addMonths(dateString, amount) {
+    const parts = dateString.split("-");
+    const year = Number(parts[0]);
+    const month = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+
+    const date = new Date(year, month, day);
+    date.setMonth(date.getMonth() + amount);
+
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, "0");
+    const newDay = String(date.getDate()).padStart(2, "0");
+
+    return newYear + "-" + newMonth + "-" + newDay;
+  }
+
+  function addYears(dateString, amount) {
+    const parts = dateString.split("-");
+    const year = Number(parts[0]);
+    const month = Number(parts[1]) - 1;
+    const day = Number(parts[2]);
+
+    const date = new Date(year, month, day);
+    date.setFullYear(date.getFullYear() + amount);
+
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, "0");
+    const newDay = String(date.getDate()).padStart(2, "0");
+
+    return newYear + "-" + newMonth + "-" + newDay;
+  }
+
+  function getNextDate(task) {
+    const interval = normalizeInterval(task.recurrenceInterval);
+
+    if (task.recurrenceType === "daily") {
+      return addDays(task.date, interval);
+    }
+
+    if (task.recurrenceType === "weekly") {
+      return addDays(task.date, interval * 7);
+    }
+
+    if (task.recurrenceType === "monthly") {
+      return addMonths(task.date, interval);
+    }
+
+    if (task.recurrenceType === "yearly") {
+      return addYears(task.date, interval);
+    }
+
+    return "";
+  }
+
+  function hasNextRecurringOccurrence(tasks, task) {
+    const nextDate = getNextDate(task);
+
+    return tasks.some(function (item) {
+      return (
+        !item.deleted &&
+        item.parentTaskId === task.id &&
+        item.date === nextDate
+      );
+    });
+  }
+
+  function createNextRecurringTask(sourceTask, tasks) {
+    if (!sourceTask.recurring || sourceTask.deleted) {
+      return null;
+    }
+
+    const nextDate = getNextDate(sourceTask);
+
+    if (!nextDate) {
+      return null;
+    }
+
+    if (hasNextRecurringOccurrence(tasks, sourceTask)) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    const nextTask = {
+      id: generateId(),
+      title: sourceTask.title,
+      description: sourceTask.description,
+      date: nextDate,
+      time: sourceTask.time || "",
+      hashtags: Array.isArray(sourceTask.hashtags) ? sourceTask.hashtags.slice() : [],
+      completed: false,
+      createdAt: now,
+      updatedAt: now,
+      deleted: false,
+      deletedAt: "",
+      recurring: sourceTask.recurring === true,
+      recurrenceType: sourceTask.recurrenceType || "",
+      recurrenceInterval: normalizeInterval(sourceTask.recurrenceInterval),
+      parentTaskId: sourceTask.id
+    };
+
+    tasks.push(nextTask);
+    return nextTask;
+  }
+
   function toggleTask(id) {
     const tasks = load();
 
@@ -142,8 +276,14 @@ const TaskStore = (function () {
       return null;
     }
 
+    const wasCompleted = tasks[index].completed;
+
     tasks[index].completed = !tasks[index].completed;
     tasks[index].updatedAt = new Date().toISOString();
+
+    if (!wasCompleted && tasks[index].completed && tasks[index].recurring) {
+      createNextRecurringTask(tasks[index], tasks);
+    }
 
     save(tasks);
     return tasks[index];

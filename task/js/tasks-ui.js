@@ -61,9 +61,14 @@ const TaskUI = (function () {
       return value;
     }
 
-    const hhmmss = value.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+    const hhmmss = value.match(/^(\d{2}):(\d{2})(?::\d{2})?$/);
     if (hhmmss) {
       return hhmmss[1] + ":" + hhmmss[2];
+    }
+
+    const timeInsideText = value.match(/(\d{2}):(\d{2})/);
+    if (timeInsideText) {
+      return timeInsideText[1] + ":" + timeInsideText[2];
     }
 
     const parsed = new Date(value);
@@ -73,7 +78,7 @@ const TaskUI = (function () {
       return hours + ":" + minutes;
     }
 
-    return value;
+    return "";
   }
 
   function formatDate(date, time) {
@@ -106,6 +111,32 @@ const TaskUI = (function () {
     }
 
     return formatted;
+  }
+
+  function formatRecurrence(task) {
+    if (!task || task.recurring !== true) {
+      return "";
+    }
+
+    const interval = Number(task.recurrenceInterval || 1);
+
+    if (task.recurrenceType === "daily") {
+      return interval === 1 ? "Recorrente • todo dia" : "Recorrente • a cada " + interval + " dias";
+    }
+
+    if (task.recurrenceType === "weekly") {
+      return interval === 1 ? "Recorrente • toda semana" : "Recorrente • a cada " + interval + " semanas";
+    }
+
+    if (task.recurrenceType === "monthly") {
+      return interval === 1 ? "Recorrente • todo mês" : "Recorrente • a cada " + interval + " meses";
+    }
+
+    if (task.recurrenceType === "yearly") {
+      return interval === 1 ? "Recorrente • todo ano" : "Recorrente • a cada " + interval + " anos";
+    }
+
+    return "Recorrente";
   }
 
   function statusMeta(status) {
@@ -189,6 +220,7 @@ const TaskUI = (function () {
     tasks.forEach(function (task) {
       const status = TaskStore.getStatus(task);
       const meta = statusMeta(status);
+      const recurrenceText = formatRecurrence(task);
 
       html += '<article class="task-card ' + meta.cardClass;
       if (task.completed) {
@@ -242,6 +274,14 @@ const TaskUI = (function () {
         '<span class="meta-pill">' +
         escapeHtml(formatDate(task.date, task.time)) +
         "</span>";
+
+      if (recurrenceText) {
+        html +=
+          '<span class="meta-pill recurrence-pill">' +
+          escapeHtml(recurrenceText) +
+          "</span>";
+      }
+
       html += "</div>";
 
       html += '<div class="task-tags">';
@@ -312,6 +352,8 @@ const TaskUI = (function () {
     renderHashtags: renderHashtags,
     renderTasks: renderTasks,
     renderUpcoming: renderUpcoming,
-    showToast: showToast
+    showToast: showToast,
+    normalizeDate: normalizeDate,
+    normalizeTime: normalizeTime
   };
 })();

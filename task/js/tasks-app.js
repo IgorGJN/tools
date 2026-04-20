@@ -4,7 +4,8 @@ const App = (function () {
       search: "",
       status: "all",
       sort: "smart",
-      tag: ""
+      tag: "",
+      date: ""
     },
     pendingDeleteId: null
   };
@@ -14,6 +15,7 @@ const App = (function () {
     syncBtn: document.getElementById("syncBtn"),
     loadingOverlay: document.getElementById("loadingOverlay"),
     loadingText: document.getElementById("loadingText"),
+    lastSyncInfo: document.getElementById("lastSyncInfo"),
 
     taskModal: document.getElementById("taskModal"),
     confirmModal: document.getElementById("confirmModal"),
@@ -24,25 +26,88 @@ const App = (function () {
     taskDate: document.getElementById("taskDate"),
     taskTime: document.getElementById("taskTime"),
     taskHashtags: document.getElementById("taskHashtags"),
+    taskRecurring: document.getElementById("taskRecurring"),
+    recurrenceFields: document.getElementById("recurrenceFields"),
+    taskRecurrenceType: document.getElementById("taskRecurrenceType"),
+    taskRecurrenceInterval: document.getElementById("taskRecurrenceInterval"),
     modalTitle: document.getElementById("modalTitle"),
     searchInput: document.getElementById("searchInput"),
     statusFilter: document.getElementById("statusFilter"),
     sortMode: document.getElementById("sortMode"),
     confirmDeleteBtn: document.getElementById("confirmDeleteBtn"),
     taskList: document.getElementById("taskList"),
-    hashtagsPanel: document.getElementById("hashtagsPanel"),
-    lastSyncInfo: document.getElementById("lastSyncInfo"),
+    hashtagsPanel: document.getElementById("hashtagsPanel")
   };
 
   function showLoading(text) {
+    if (!refs.loadingText || !refs.loadingOverlay) {
+      return;
+    }
+
     refs.loadingText.textContent = text || "Carregando...";
     refs.loadingOverlay.classList.remove("hidden");
     refs.loadingOverlay.setAttribute("aria-hidden", "false");
   }
 
   function hideLoading() {
+    if (!refs.loadingOverlay) {
+      return;
+    }
+
     refs.loadingOverlay.classList.add("hidden");
     refs.loadingOverlay.setAttribute("aria-hidden", "true");
+  }
+
+  function formatLastSync(dateString) {
+    if (!dateString) {
+      return "Última sincronização: nunca";
+    }
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) {
+      return "Última sincronização: nunca";
+    }
+
+    return "Última sincronização: " + date.toLocaleString("pt-BR");
+  }
+
+  function updateLastSyncInfo() {
+    if (!refs.lastSyncInfo) {
+      return;
+    }
+
+    refs.lastSyncInfo.textContent = formatLastSync(TaskStore.getLastSync());
+  }
+
+  function showSyncSuccess() {
+    if (!refs.syncBtn) {
+      return;
+    }
+
+    const originalText = "Sincronizar";
+
+    refs.syncBtn.textContent = "✔ Sincronizado";
+    refs.syncBtn.classList.add("btn-success");
+    refs.syncBtn.disabled = true;
+
+    setTimeout(function () {
+      refs.syncBtn.textContent = originalText;
+      refs.syncBtn.classList.remove("btn-success");
+      refs.syncBtn.disabled = false;
+    }, 2000);
+  }
+
+  function updateRecurrenceVisibility() {
+    if (!refs.taskRecurring || !refs.recurrenceFields) {
+      return;
+    }
+
+    if (refs.taskRecurring.checked) {
+      refs.recurrenceFields.classList.remove("hidden");
+    } else {
+      refs.recurrenceFields.classList.add("hidden");
+    }
   }
 
   function getAllTasks() {
@@ -51,7 +116,14 @@ const App = (function () {
 
   function getVisibleTasks() {
     const tasks = getAllTasks();
-    const filtered = TaskStore.filterTasks(tasks, state.filters);
+    let filtered = TaskStore.filterTasks(tasks, state.filters);
+
+    if (state.filters.date) {
+      filtered = filtered.filter(function (task) {
+        return task.date === state.filters.date;
+      });
+    }
+
     return TaskStore.sortTasks(filtered, state.filters.sort);
   }
 
@@ -63,26 +135,37 @@ const App = (function () {
     TaskUI.renderHashtags(TaskStore.allHashtags(allTasks), state.filters.tag);
     TaskUI.renderTasks(visibleTasks);
     TaskUI.renderUpcoming(TaskStore.getUpcoming(allTasks));
+    TaskCalendar.render(allTasks);
   }
 
   function openModal(task) {
     refs.taskForm.reset();
     refs.taskDate.value = TaskStore.todayISO();
+    refs.taskTime.value = "";
     refs.taskId.value = "";
     refs.modalTitle.textContent = "Nova tarefa";
+    refs.taskRecurring.checked = false;
+    refs.taskRecurrenceType.value = "daily";
+    refs.taskRecurrenceInterval.value = 1;
+    updateRecurrenceVisibility();
 
     if (task) {
       refs.modalTitle.textContent = "Editar tarefa";
       refs.taskId.value = task.id;
       refs.taskTitle.value = task.title || "";
       refs.taskDescription.value = task.description || "";
-      refs.taskDate.value = task.date || "";
-      refs.taskTime.value = task.time || "";
+      refs.taskDate.value = TaskUI.normalizeDate(task.date || "");
+      refs.taskTime.value = TaskUI.normalizeTime(task.time || "");
       refs.taskHashtags.value = (task.hashtags || [])
         .map(function (tag) {
           return "#" + tag;
         })
         .join(", ");
+
+      refs.taskRecurring.checked = task.recurring === true;
+      refs.taskRecurrenceType.value = task.recurrenceType || "daily";
+      refs.taskRecurrenceInterval.value = task.recurrenceInterval || 1;
+      updateRecurrenceVisibility();
     }
 
     refs.taskModal.classList.remove("hidden");
@@ -114,7 +197,10 @@ const App = (function () {
       description: refs.taskDescription.value,
       date: refs.taskDate.value,
       time: refs.taskTime.value,
-      hashtags: refs.taskHashtags.value
+      hashtags: refs.taskHashtags.value,
+      recurring: refs.taskRecurring.checked,
+      recurrenceType: refs.taskRecurrenceType.value,
+      recurrenceInterval: refs.taskRecurrenceInterval.value
     };
 
     if (!payload.title.trim()) {
@@ -223,101 +309,64 @@ const App = (function () {
     });
   }
 
-  function formatLastSync(dateString) {
-  if (!dateString) {
-    return "Última sincronização: nunca";
-  }
-
-  const date = new Date(dateString);
-
-  if (isNaN(date.getTime())) {
-    return "Última sincronização: nunca";
-  }
-
-  return "Última sincronização: " + date.toLocaleString("pt-BR");
-}
-
-function updateLastSyncInfo() {
-  if (!refs.lastSyncInfo) {
-    return;
-  }
-
-  refs.lastSyncInfo.textContent = formatLastSync(TaskStore.getLastSync());
-}
-
-function showSyncSuccess() {
-  if (!refs.syncBtn) {
-    return;
-  }
-
-  const originalText = "Sincronizar";
-
-  refs.syncBtn.textContent = "✔ Sincronizado";
-  refs.syncBtn.classList.add("btn-success");
-  refs.syncBtn.disabled = true;
-
-  setTimeout(function () {
-    refs.syncBtn.textContent = originalText;
-    refs.syncBtn.classList.remove("btn-success");
-    refs.syncBtn.disabled = false;
-  }, 2000);
-}
-
   async function syncNow() {
-  try {
-    showLoading("Sincronizando tarefas...");
+    try {
+      showLoading("Sincronizando tarefas...");
 
-    const localTasks = TaskStore.load();
-    const mergedTasks = await TaskSync.syncTasks(localTasks);
+      const localTasks = TaskStore.load();
+      const mergedTasks = await TaskSync.syncTasks(localTasks);
 
-    TaskStore.save(mergedTasks);
-
-    const now = new Date().toISOString();
-    TaskStore.saveLastSync(now);
-
-    refresh();
-    updateLastSyncInfo();
-    showSyncSuccess();
-    TaskUI.showToast("Sincronização concluída.");
-  } catch (error) {
-    console.error("Erro no syncNow:", error);
-    TaskUI.showToast("Erro ao sincronizar: " + error.message);
-  } finally {
-    hideLoading();
-  }
-}
-
-async function initialSync() {
-  try {
-    showLoading("Carregando backup da planilha...");
-
-    const remoteTasks = await TaskSync.fetchRemoteTasks();
-
-    if (remoteTasks.length > 0 && TaskStore.load().length === 0) {
-      TaskStore.save(remoteTasks);
+      TaskStore.save(mergedTasks);
       TaskStore.saveLastSync(new Date().toISOString());
-    }
 
-    refresh();
-    updateLastSyncInfo();
-  } catch (error) {
-    console.error("Erro no initialSync:", error);
-    TaskUI.showToast("Erro ao carregar backup: " + error.message);
-    refresh();
-    updateLastSyncInfo();
-  } finally {
-    hideLoading();
+      refresh();
+      updateLastSyncInfo();
+      showSyncSuccess();
+      TaskUI.showToast("Sincronização concluída.");
+    } catch (error) {
+      console.error("Erro no syncNow:", error);
+      TaskUI.showToast("Erro ao sincronizar: " + error.message);
+    } finally {
+      hideLoading();
+    }
   }
-}
+
+  async function initialSync() {
+    try {
+      showLoading("Carregando backup da planilha...");
+
+      const remoteTasks = await TaskSync.fetchRemoteTasks();
+
+      if (remoteTasks.length > 0 && TaskStore.load().length === 0) {
+        TaskStore.save(remoteTasks);
+        TaskStore.saveLastSync(new Date().toISOString());
+      }
+
+      refresh();
+      updateLastSyncInfo();
+    } catch (error) {
+      console.error("Erro no initialSync:", error);
+      refresh();
+      updateLastSyncInfo();
+    } finally {
+      hideLoading();
+    }
+  }
 
   function bindEvents() {
     refs.newTaskBtn.addEventListener("click", function () {
       openModal();
     });
 
-    refs.syncBtn.addEventListener("click", function () {
-      syncNow();
-    });
+    if (refs.syncBtn) {
+      refs.syncBtn.addEventListener("click", function () {
+        syncNow();
+      });
+    }
+
+    if (refs.taskRecurring) {
+      refs.taskRecurring.addEventListener("change", updateRecurrenceVisibility);
+    }
 
     refs.taskForm.addEventListener("submit", handleSubmit);
     refs.taskList.addEventListener("click", handleTaskListClick);
@@ -336,18 +385,58 @@ async function initialSync() {
 
     bindModalClose();
     bindFilters();
+
+    TaskCalendar.bindEvents(
+      function (date, shouldRefresh) {
+        if (date) {
+          state.filters.date = date;
+          TaskCalendar.setSelectedDate(date);
+        }
+
+        if (shouldRefresh !== false) {
+          refresh();
+        }
+      },
+      function () {
+        state.filters.date = "";
+        TaskCalendar.setSelectedDate("");
+        refresh();
+      }
+    );
+    const themeBtn = document.getElementById("themeToggleBtn");
+
+if (themeBtn) {
+  themeBtn.addEventListener("click", toggleTheme);
+}
   }
 
   async function init() {
-  hideLoading();
-  bindEvents();
-  refresh();
-  updateLastSyncInfo();
-  await syncNow();
+    applySavedTheme();
+    hideLoading();
+    bindEvents();
+    refresh();
+    updateLastSyncInfo();
+    await initialSync();
 
-  setInterval(function () {
-    syncNow();
-  }, 1000 * 60 * 5);
+    setInterval(function () {
+      syncNow();
+    }, 1000 * 60 * 5);
+  }
+
+  function applySavedTheme() {
+  const saved = localStorage.getItem("theme");
+
+  if (saved === "light") {
+    document.documentElement.classList.add("light");
+  }
+  updateThemeIcon()
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.classList.toggle("light");
+
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+  updateThemeIcon()
 }
 
   return {
@@ -358,3 +447,10 @@ async function initialSync() {
 document.addEventListener("DOMContentLoaded", function () {
   App.init();
 });
+
+function updateThemeIcon() {
+  const btn = document.getElementById("themeToggleBtn");
+  const isLight = document.documentElement.classList.contains("light");
+
+  btn.textContent = isLight ? "🌙" : "☀️";
+}

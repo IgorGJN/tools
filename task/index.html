@@ -17,25 +17,28 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-  <div>
-    <p class="eyebrow">Ferramenta</p>
-    <h1>Lista de tarefas</h1>
-    <p class="subtitle">
-      Organize compromissos, acompanhe status e filtre por hashtag.
-    </p>
-    <p id="lastSyncInfo" class="last-sync-info">Última sincronização: nunca</p>
-  </div>
+      <div>
+        <p class="eyebrow">Ferramenta</p>
+        <h1>Lista de tarefas</h1>
+        <p class="subtitle">
+          Organize compromissos, acompanhe status e filtre por hashtag.
+        </p>
+        <p id="lastSyncInfo" class="last-sync-info">Última sincronização: nunca</p>
+      </div>
 
-  <div class="topbar-actions">
-    <button id="syncBtn" class="btn btn-secondary" type="button">
-      Sincronizar
-    </button>
+      <div class="topbar-actions">
+        <button id="themeToggleBtn" class="btn btn-secondary" type="button">
+  Tema
+</button>
+        <button id="syncBtn" class="btn btn-secondary" type="button">
+          Sincronizar
+        </button>
 
-    <button id="newTaskBtn" class="btn btn-primary" type="button">
-      + Nova tarefa
-    </button>
-  </div>
-</header>
+        <button id="newTaskBtn" class="btn btn-primary" type="button">
+          + Nova tarefa
+        </button>
+      </div>
+    </header>
 
     <section class="summary-grid" id="summaryGrid">
       <article class="summary-card">
@@ -97,6 +100,39 @@
         <div id="hashtagsPanel" class="hashtags-panel"></div>
       </div>
     </section>
+
+    <section class="card calendar-card">
+  <div class="calendar-header">
+    <div>
+      <p class="calendar-label">Agenda mensal</p>
+      <h2 id="calendarTitle">Calendário</h2>
+    </div>
+
+    <div class="calendar-actions">
+      <button id="clearDateFilterBtn" class="btn btn-secondary" type="button">
+        Mostrar tudo
+      </button>
+      <button id="prevMonthBtn" class="btn btn-secondary" type="button">
+        ‹
+      </button>
+      <button id="nextMonthBtn" class="btn btn-secondary" type="button">
+        ›
+      </button>
+    </div>
+  </div>
+
+  <div class="calendar-weekdays">
+    <div>Dom</div>
+    <div>Seg</div>
+    <div>Ter</div>
+    <div>Qua</div>
+    <div>Qui</div>
+    <div>Sex</div>
+    <div>Sáb</div>
+  </div>
+
+  <div id="calendarGrid" class="calendar-grid"></div>
+</section>
 
     <section class="main-grid">
       <div class="left-column">
@@ -188,6 +224,37 @@
           <small>Use vírgulas ou espaços. O símbolo # é opcional.</small>
         </div>
 
+        <div class="field recurring-box">
+          <label class="checkbox-row">
+            <input type="checkbox" id="taskRecurring" />
+            <span>Tarefa recorrente</span>
+          </label>
+        </div>
+
+        <div id="recurrenceFields" class="form-grid hidden">
+          <div class="field">
+            <label for="taskRecurrenceType">Frequência</label>
+            <select id="taskRecurrenceType">
+              <option value="daily">Diária</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensal</option>
+              <option value="yearly">Anual</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="taskRecurrenceInterval">Intervalo</label>
+            <input
+              type="number"
+              id="taskRecurrenceInterval"
+              min="1"
+              step="1"
+              value="1"
+            />
+            <small>Ex.: 1 = toda semana, 2 = a cada 2 semanas</small>
+          </div>
+        </div>
+
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" data-close-modal>
             Cancelar
@@ -236,19 +303,19 @@
     </div>
   </div>
 
-<div id="loadingOverlay" class="loading-overlay hidden" aria-hidden="true">
-  <div class="loading-box">
-    <div class="loading-spinner"></div>
-    <p id="loadingText">Sincronizando tarefas...</p>
+  <div id="loadingOverlay" class="loading-overlay hidden" aria-hidden="true">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <p id="loadingText">Sincronizando tarefas...</p>
+    </div>
   </div>
-</div>
 
-<div id="toastContainer" class="toast-container"></div>
+  <div id="toastContainer" class="toast-container"></div>
 
   <script src="./js/tasks-data.js"></script>
   <script src="./js/tasks-ui.js"></script>
   <script src="./js/tasks-sync.js"></script>
   <script src="./js/tasks-app.js"></script>
-
+  <script src="./js/tasks-calendar.js"></script>
 </body>
 </html>

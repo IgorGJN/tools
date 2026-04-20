@@ -24,7 +24,13 @@ const TaskSync = (function () {
       deleted:
         task.deleted === true ||
         String(task.deleted).toLowerCase() === "true",
-      deletedAt: task.deletedAt || ""
+      deletedAt: task.deletedAt || "",
+      recurring:
+        task.recurring === true ||
+        String(task.recurring).toLowerCase() === "true",
+      recurrenceType: task.recurrenceType || "",
+      recurrenceInterval: Number(task.recurrenceInterval || 1),
+      parentTaskId: task.parentTaskId || ""
     };
   }
 
@@ -40,15 +46,16 @@ const TaskSync = (function () {
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       deleted: task.deleted === true,
-      deletedAt: task.deletedAt || ""
+      deletedAt: task.deletedAt || "",
+      recurring: task.recurring === true,
+      recurrenceType: task.recurrenceType || "",
+      recurrenceInterval: Number(task.recurrenceInterval || 1),
+      parentTaskId: task.parentTaskId || ""
     };
   }
 
   async function parseJsonResponse(response) {
     const text = await response.text();
-
-    console.log("HTTP status:", response.status);
-    console.log("Resposta bruta:", text);
 
     try {
       return JSON.parse(text);
@@ -57,15 +64,31 @@ const TaskSync = (function () {
     }
   }
 
+  function isSuccessResponse(data) {
+    return data && (data.success === true || data.ok === true);
+  }
+
+  function getErrorMessage(data, fallback) {
+    if (!data) {
+      return fallback;
+    }
+
+    return data.message || data.error || fallback;
+  }
+
+  function getTasksFromResponse(data) {
+    return Array.isArray(data.tasks) ? data.tasks : [];
+  }
+
   async function fetchRemoteTasks() {
     const response = await fetch(WEB_APP_URL + "?action=list");
     const data = await parseJsonResponse(response);
 
-    if (!data.success) {
-      throw new Error(data.message || "Erro ao buscar dados remotos.");
+    if (!isSuccessResponse(data)) {
+      throw new Error(getErrorMessage(data, "Erro ao buscar dados remotos."));
     }
 
-    return (data.tasks || []).map(normalizeRemoteTask);
+    return getTasksFromResponse(data).map(normalizeRemoteTask);
   }
 
   async function syncTasks(localTasks) {
@@ -82,11 +105,11 @@ const TaskSync = (function () {
 
     const data = await parseJsonResponse(response);
 
-    if (!data.success) {
-      throw new Error(data.message || "Erro na sincronização.");
+    if (!isSuccessResponse(data)) {
+      throw new Error(getErrorMessage(data, "Erro na sincronização."));
     }
 
-    return (data.tasks || []).map(normalizeRemoteTask);
+    return getTasksFromResponse(data).map(normalizeRemoteTask);
   }
 
   return {
