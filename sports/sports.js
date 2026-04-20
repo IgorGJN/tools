@@ -1,4 +1,4 @@
-const API_URL = 'https://script.google.com/macros/s/AKfycbxvMgp9AEEPmbkqRCVT3jkeiVBaxt1OMrfMIyZIgriz6LHkICjntqTzVcTTKcZ8O0eFAw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzo7DeBMzo466WXOAtrqewiezmObZXUfJ3N51klsO1GutT1zgsKZyS9nOJSB2WKNoQp/exec';
 
 const categoriaEl = document.getElementById('categoria');
 const atividadeEl = document.getElementById('atividade');
