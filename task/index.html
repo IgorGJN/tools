@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Tarefas com Agenda</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="./css/tasks.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Ferramenta</p>
+        <h1>Lista de tarefas</h1>
+        <p class="subtitle">
+          Organize compromissos, acompanhe status e filtre por hashtag.
+        </p>
+      </div>
+
+<div class="topbar-actions">
+  <button id="syncBtn" class="btn btn-secondary" type="button">
+    Sincronizar
+  </button>
+
+  <button id="newTaskBtn" class="btn btn-primary" type="button">
+    + Nova tarefa
+  </button>
+</div>
+    </header>
+
+    <section class="summary-grid" id="summaryGrid">
+      <article class="summary-card">
+        <span>Total</span>
+        <strong id="totalTasks">0</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Pendentes</span>
+        <strong id="pendingTasks">0</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>Concluídas</span>
+        <strong id="completedTasks">0</strong>
+      </article>
+
+      <article class="summary-card danger">
+        <span>Atrasadas</span>
+        <strong id="overdueTasks">0</strong>
+      </article>
+    </section>
+
+    <section class="toolbar card">
+      <div class="toolbar-row">
+        <div class="field grow">
+          <label for="searchInput">Buscar</label>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Buscar por título ou descrição"
+          />
+        </div>
+
+        <div class="field small">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter">
+            <option value="all">Todas</option>
+            <option value="pending">Pendentes</option>
+            <option value="completed">Concluídas</option>
+            <option value="today">Hoje</option>
+            <option value="overdue">Atrasadas</option>
+          </select>
+        </div>
+
+        <div class="field small">
+          <label for="sortMode">Ordenação</label>
+          <select id="sortMode">
+            <option value="smart">Automática</option>
+            <option value="date-asc">Data crescente</option>
+            <option value="date-desc">Data decrescente</option>
+            <option value="created-desc">Mais recentes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tag-filter-row">
+        <span>Hashtags:</span>
+        <div id="hashtagsPanel" class="hashtags-panel"></div>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <div class="left-column">
+        <section class="card section-card">
+          <div class="section-header">
+            <h2>Tarefas</h2>
+            <span id="taskCountLabel" class="section-count">0 itens</span>
+          </div>
+
+          <div id="taskList" class="task-list"></div>
+
+          <div id="emptyState" class="empty-state hidden">
+            <div class="empty-icon">✓</div>
+            <h3>Nenhuma tarefa encontrada</h3>
+            <p>Crie uma nova tarefa ou ajuste os filtros para ver os resultados.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="right-column">
+        <section class="card section-card sticky-box">
+          <div class="section-header">
+            <h2>Próximas</h2>
+          </div>
+          <div id="upcomingList" class="upcoming-list"></div>
+        </section>
+      </aside>
+    </section>
+  </div>
+
+  <div id="taskModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <div
+      class="modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal-header">
+        <h2 id="modalTitle">Nova tarefa</h2>
+        <button
+          class="icon-btn"
+          type="button"
+          data-close-modal
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="taskForm" class="task-form">
+        <input type="hidden" id="taskId" />
+
+        <div class="field">
+          <label for="taskTitle">Título</label>
+          <input type="text" id="taskTitle" maxlength="100" required />
+        </div>
+
+        <div class="field">
+          <label for="taskDescription">Descrição</label>
+          <textarea
+            id="taskDescription"
+            rows="4"
+            maxlength="500"
+            placeholder="Detalhes da tarefa"
+          ></textarea>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="taskDate">Data</label>
+            <input type="date" id="taskDate" required />
+          </div>
+
+          <div class="field">
+            <label for="taskTime">Hora</label>
+            <input type="time" id="taskTime" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="taskHashtags">Hashtags</label>
+          <input
+            type="text"
+            id="taskHashtags"
+            placeholder="#trabalho, #estudo, #mercado"
+          />
+          <small>Use vírgulas ou espaços. O símbolo # é opcional.</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" data-close-modal>
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Salvar tarefa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" data-close-confirm></div>
+
+    <div
+      class="modal-dialog small-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirmTitle"
+    >
+      <div class="modal-header">
+        <h2 id="confirmTitle">Excluir tarefa</h2>
+        <button
+          class="icon-btn"
+          type="button"
+          data-close-confirm
+          aria-label="Fechar"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="confirm-content">
+        <p>Tem certeza que deseja excluir esta tarefa?</p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" data-close-confirm>
+            Cancelar
+          </button>
+          <button type="button" id="confirmDeleteBtn" class="btn btn-danger">
+            Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div id="loadingOverlay" class="loading-overlay hidden" aria-hidden="true">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <p id="loadingText">Sincronizando tarefas...</p>
+  </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+  <script src="./js/tasks-data.js"></script>
+  <script src="./js/tasks-ui.js"></script>
+  <script src="./js/tasks-sync.js"></script>
+  <script src="./js/tasks-app.js"></script>
+
+</body>
+</html>
