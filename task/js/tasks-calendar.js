@@ -1,16 +1,19 @@
 const TaskCalendar = (function () {
   const refs = {
+    calendarCard: document.querySelector(".calendar-card"),
     calendarTitle: document.getElementById("calendarTitle"),
     calendarGrid: document.getElementById("calendarGrid"),
     prevMonthBtn: document.getElementById("prevMonthBtn"),
     nextMonthBtn: document.getElementById("nextMonthBtn"),
-    clearDateFilterBtn: document.getElementById("clearDateFilterBtn")
+    clearDateFilterBtn: document.getElementById("clearDateFilterBtn"),
+    toggleCalendarBtn: document.getElementById("toggleCalendarBtn")
   };
 
   const state = {
     currentMonth: new Date().getMonth(),
     currentYear: new Date().getFullYear(),
-    selectedDate: ""
+    selectedDate: "",
+    collapsed: false
   };
 
   function pad(value) {
@@ -110,6 +113,20 @@ const TaskCalendar = (function () {
     });
   }
 
+  function updateCollapsedUI() {
+    if (!refs.calendarCard || !refs.toggleCalendarBtn) {
+      return;
+    }
+
+    if (state.collapsed) {
+      refs.calendarCard.classList.add("calendar-body-hidden");
+      refs.toggleCalendarBtn.textContent = "Mostrar calendário";
+    } else {
+      refs.calendarCard.classList.remove("calendar-body-hidden");
+      refs.toggleCalendarBtn.textContent = "Ocultar calendário";
+    }
+  }
+
   function render(tasks) {
     if (!refs.calendarGrid || !refs.calendarTitle) {
       return;
@@ -203,6 +220,7 @@ const TaskCalendar = (function () {
     });
 
     refs.calendarGrid.innerHTML = html;
+    updateCollapsedUI();
   }
 
   function setSelectedDate(dateString) {
@@ -253,6 +271,13 @@ const TaskCalendar = (function () {
       });
     }
 
+    if (refs.toggleCalendarBtn) {
+      refs.toggleCalendarBtn.addEventListener("click", function () {
+        state.collapsed = !state.collapsed;
+        updateCollapsedUI();
+      });
+    }
+
     if (refs.calendarGrid) {
       refs.calendarGrid.addEventListener("click", function (event) {
         const button = event.target.closest(".calendar-day");
@@ -268,6 +293,10 @@ const TaskCalendar = (function () {
         if (parsed) {
           state.currentMonth = parsed.getMonth();
           state.currentYear = parsed.getFullYear();
+        }
+
+        if (window.innerWidth <= 768) {
+          state.collapsed = true;
         }
 
         onDateSelect(date, true);
