@@ -292,30 +292,7 @@ async function initialSync() {
     bindFilters();
   }
 
-  function seedExampleData() {
-    if (TaskStore.load().length > 0) {
-      return;
-    }
-
-    TaskStore.createTask({
-      title: "Planejar atualização do site",
-      description: "Separar conteúdo, imagens e revisar o layout da página.",
-      date: TaskStore.todayISO(),
-      time: "10:00",
-      hashtags: "#site, #conteudo"
-    });
-
-    TaskStore.createTask({
-      title: "Revisar ferramenta esportiva",
-      description: "Testar responsividade e validar os links da página inicial.",
-      date: TaskStore.todayISO(),
-      time: "16:00",
-      hashtags: "#revisao, #tools"
-    });
-  }
-
   async function init() {
-  seedExampleData();
   bindEvents();
   refresh();
   await syncNow();
