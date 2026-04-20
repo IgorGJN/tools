@@ -21,17 +21,79 @@ const TaskUI = (function () {
       .replace(/'/g, "&#039;");
   }
 
-  function formatDate(date, time) {
-    if (!date) {
+  function normalizeDate(date) {
+    const value = String(date || "").trim();
+
+    if (!value) {
       return "";
     }
 
-    const parts = date.split("-");
+    const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      return value;
+    }
+
+    const brMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (brMatch) {
+      return brMatch[3] + "-" + brMatch[2] + "-" + brMatch[1];
+    }
+
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) {
+      const year = parsed.getFullYear();
+      const month = String(parsed.getMonth() + 1).padStart(2, "0");
+      const day = String(parsed.getDate()).padStart(2, "0");
+      return year + "-" + month + "-" + day;
+    }
+
+    return "";
+  }
+
+  function normalizeTime(time) {
+    const value = String(time || "").trim();
+
+    if (!value) {
+      return "";
+    }
+
+    const hhmm = value.match(/^(\d{2}):(\d{2})$/);
+    if (hhmm) {
+      return value;
+    }
+
+    const hhmmss = value.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+    if (hhmmss) {
+      return hhmmss[1] + ":" + hhmmss[2];
+    }
+
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) {
+      const hours = String(parsed.getHours()).padStart(2, "0");
+      const minutes = String(parsed.getMinutes()).padStart(2, "0");
+      return hours + ":" + minutes;
+    }
+
+    return value;
+  }
+
+  function formatDate(date, time) {
+    const normalizedDate = normalizeDate(date);
+    const normalizedTime = normalizeTime(time);
+
+    if (!normalizedDate) {
+      return "Sem data";
+    }
+
+    const parts = normalizedDate.split("-");
     const year = Number(parts[0]);
     const month = Number(parts[1]) - 1;
     const day = Number(parts[2]);
 
     const baseDate = new Date(year, month, day);
+
+    if (isNaN(baseDate.getTime())) {
+      return "Sem data";
+    }
 
     const formatted = baseDate.toLocaleDateString("pt-BR", {
       weekday: "short",
@@ -39,8 +101,8 @@ const TaskUI = (function () {
       month: "short"
     });
 
-    if (time) {
-      return formatted + " • " + time;
+    if (normalizedTime) {
+      return formatted + " • " + normalizedTime;
     }
 
     return formatted;
@@ -83,7 +145,7 @@ const TaskUI = (function () {
   function renderHashtags(tags, activeTag) {
     if (!tags.length) {
       elements.hashtagsPanel.innerHTML =
-        '<span class="tag-chip">Nenhuma hashtag cadastrada</span>';
+        '<span class="tag-empty">Nenhuma hashtag com pendências</span>';
       return;
     }
 
@@ -135,7 +197,6 @@ const TaskUI = (function () {
       html += '">';
 
       html += '<div class="task-top">';
-
       html += '<div class="task-title-wrap">';
 
       html +=
@@ -168,7 +229,6 @@ const TaskUI = (function () {
         task.id +
         '">Excluir</button>';
       html += "</div>";
-
       html += "</div>";
 
       html += '<div class="task-meta">';
@@ -189,14 +249,14 @@ const TaskUI = (function () {
       if (task.hashtags && task.hashtags.length) {
         task.hashtags.forEach(function (tag) {
           html +=
-            '<button class="tag-chip" type="button" data-tag="' +
+            '<button class="tag-chip task-tag" type="button" data-tag="' +
             escapeHtml(tag) +
             '">#' +
             escapeHtml(tag) +
             "</button>";
         });
       } else {
-        html += '<span class="tag-chip">Sem hashtags</span>';
+        html += '<span class="tag-empty">Sem hashtags</span>';
       }
 
       html += "</div>";
@@ -229,23 +289,23 @@ const TaskUI = (function () {
   }
 
   function showToast(message) {
-  if (!elements.toastContainer) {
-    console.warn("toastContainer não encontrado.");
-    return;
-  }
-
-  const toast = document.createElement("div");
-  toast.className = "toast";
-  toast.textContent = message;
-
-  elements.toastContainer.appendChild(toast);
-
-  setTimeout(function () {
-    if (toast.parentNode) {
-      toast.parentNode.removeChild(toast);
+    if (!elements.toastContainer) {
+      console.warn("toastContainer não encontrado.");
+      return;
     }
-  }, 2600);
-}
+
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.textContent = message;
+
+    elements.toastContainer.appendChild(toast);
+
+    setTimeout(function () {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 2600);
+  }
 
   return {
     renderSummary: renderSummary,

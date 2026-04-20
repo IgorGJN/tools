@@ -1,5 +1,5 @@
 const TaskSync = (function () {
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyxG252OTEy0hv36D1T2BiD4GkQL_xvF-HRzxqE3nCTb1NlH4dDQm1DgMI4VC9JZyUuow/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxvMgp9AEEPmbkqRCVT3jkeiVBaxt1OMrfMIyZIgriz6LHkICjntqTzVcTTKcZ8O0eFAw/exechttps://script.google.com/macros/s/AKfycbxvMgp9AEEPmbkqRCVT3jkeiVBaxt1OMrfMIyZIgriz6LHkICjntqTzVcTTKcZ8O0eFAw/exec";
 
   function normalizeRemoteTask(task) {
     return {

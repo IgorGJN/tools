@@ -70,8 +70,8 @@ const TaskStore = (function () {
       id: generateId(),
       title: String(payload.title || "").trim(),
       description: String(payload.description || "").trim(),
-      date: String(payload.date || ""),
-      time: String(payload.time || ""),
+      date: String(payload.date || "").trim(),
+      time: String(payload.time || "").trim(),
       hashtags: normalizeHashtags(payload.hashtags || ""),
       completed: false,
       createdAt: now,
@@ -100,8 +100,8 @@ const TaskStore = (function () {
       ...tasks[index],
       title: String(payload.title || "").trim(),
       description: String(payload.description || "").trim(),
-      date: String(payload.date || ""),
-      time: String(payload.time || ""),
+      date: String(payload.date || "").trim(),
+      time: String(payload.time || "").trim(),
       hashtags: normalizeHashtags(payload.hashtags || ""),
       updatedAt: new Date().toISOString()
     };
@@ -178,8 +178,14 @@ const TaskStore = (function () {
   }
 
   function getDateTimeValue(task) {
-    const safeTime = task.time && task.time.trim() ? task.time : "23:59";
-    return new Date(task.date + "T" + safeTime + ":00").getTime();
+    const safeDate = String(task.date || "").trim();
+    const safeTime = String(task.time || "").trim() || "23:59";
+
+    if (!safeDate) {
+      return 0;
+    }
+
+    return new Date(safeDate + "T" + safeTime + ":00").getTime();
   }
 
   function smartSort(tasks) {
@@ -288,7 +294,7 @@ const TaskStore = (function () {
     const counts = {};
 
     tasks.forEach(function (task) {
-      if (task.deleted || !Array.isArray(task.hashtags)) {
+      if (task.deleted || task.completed || !Array.isArray(task.hashtags)) {
         return;
       }
 

@@ -387,3 +387,36 @@ body {
   background: var(--success);
   color: #fff;
 }
+
+.tag-chip {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 156, 255, 0.45);
+  background: rgba(124, 156, 255, 0.14);
+  color: #dbe5ff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.tag-chip:hover {
+  background: rgba(124, 156, 255, 0.24);
+}
+
+.tag-chip.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.task-tag {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #eef2ff;
+}
+
+.tag-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
