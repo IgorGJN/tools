@@ -30,7 +30,8 @@ const App = (function () {
     sortMode: document.getElementById("sortMode"),
     confirmDeleteBtn: document.getElementById("confirmDeleteBtn"),
     taskList: document.getElementById("taskList"),
-    hashtagsPanel: document.getElementById("hashtagsPanel")
+    hashtagsPanel: document.getElementById("hashtagsPanel"),
+    lastSyncInfo: document.getElementById("lastSyncInfo"),
   };
 
   function showLoading(text) {
@@ -222,18 +223,61 @@ const App = (function () {
     });
   }
 
+  function formatLastSync(dateString) {
+  if (!dateString) {
+    return "Última sincronização: nunca";
+  }
+
+  const date = new Date(dateString);
+
+  if (isNaN(date.getTime())) {
+    return "Última sincronização: nunca";
+  }
+
+  return "Última sincronização: " + date.toLocaleString("pt-BR");
+}
+
+function updateLastSyncInfo() {
+  if (!refs.lastSyncInfo) {
+    return;
+  }
+
+  refs.lastSyncInfo.textContent = formatLastSync(TaskStore.getLastSync());
+}
+
+function showSyncSuccess() {
+  if (!refs.syncBtn) {
+    return;
+  }
+
+  const originalText = "Sincronizar";
+
+  refs.syncBtn.textContent = "✔ Sincronizado";
+  refs.syncBtn.classList.add("btn-success");
+  refs.syncBtn.disabled = true;
+
+  setTimeout(function () {
+    refs.syncBtn.textContent = originalText;
+    refs.syncBtn.classList.remove("btn-success");
+    refs.syncBtn.disabled = false;
+  }, 2000);
+}
+
   async function syncNow() {
   try {
     showLoading("Sincronizando tarefas...");
 
     const localTasks = TaskStore.load();
-    console.log("Tarefas locais antes do sync:", localTasks);
-
     const mergedTasks = await TaskSync.syncTasks(localTasks);
-    console.log("Tarefas retornadas da API:", mergedTasks);
 
     TaskStore.save(mergedTasks);
+
+    const now = new Date().toISOString();
+    TaskStore.saveLastSync(now);
+
     refresh();
+    updateLastSyncInfo();
+    showSyncSuccess();
     TaskUI.showToast("Sincronização concluída.");
   } catch (error) {
     console.error("Erro no syncNow:", error);
@@ -248,17 +292,19 @@ async function initialSync() {
     showLoading("Carregando backup da planilha...");
 
     const remoteTasks = await TaskSync.fetchRemoteTasks();
-    console.log("Tarefas remotas no carregamento inicial:", remoteTasks);
 
     if (remoteTasks.length > 0 && TaskStore.load().length === 0) {
       TaskStore.save(remoteTasks);
+      TaskStore.saveLastSync(new Date().toISOString());
     }
 
     refresh();
+    updateLastSyncInfo();
   } catch (error) {
     console.error("Erro no initialSync:", error);
     TaskUI.showToast("Erro ao carregar backup: " + error.message);
     refresh();
+    updateLastSyncInfo();
   } finally {
     hideLoading();
   }
@@ -293,9 +339,15 @@ async function initialSync() {
   }
 
   async function init() {
+  hideLoading();
   bindEvents();
   refresh();
+  updateLastSyncInfo();
   await syncNow();
+
+  setInterval(function () {
+    syncNow();
+  }, 1000 * 60 * 5);
 }
 
   return {

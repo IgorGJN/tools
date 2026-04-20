@@ -370,3 +370,20 @@ body {
     transform: rotate(360deg);
   }
 }
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.last-sync-info {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}

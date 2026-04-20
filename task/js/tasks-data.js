@@ -1,5 +1,6 @@
 const TaskStore = (function () {
   const STORAGE_KEY = "tasks_tool_items_v1";
+  const LAST_SYNC_KEY = "tasks_tool_last_sync_v1";
 
   function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -19,6 +20,14 @@ const TaskStore = (function () {
 
   function save(tasks) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }
+
+  function saveLastSync(dateString) {
+    localStorage.setItem(LAST_SYNC_KEY, String(dateString || ""));
+  }
+
+  function getLastSync() {
+    return localStorage.getItem(LAST_SYNC_KEY) || "";
   }
 
   function normalizeHashtags(input) {
@@ -66,7 +75,9 @@ const TaskStore = (function () {
       hashtags: normalizeHashtags(payload.hashtags || ""),
       completed: false,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      deleted: false,
+      deletedAt: ""
     };
 
     tasks.push(task);
@@ -100,11 +111,24 @@ const TaskStore = (function () {
   }
 
   function deleteTask(id) {
-    const tasks = load().filter(function (task) {
-      return task.id !== id;
+    const tasks = load();
+
+    const index = tasks.findIndex(function (task) {
+      return task.id === id;
     });
 
+    if (index === -1) {
+      return null;
+    }
+
+    const now = new Date().toISOString();
+
+    tasks[index].deleted = true;
+    tasks[index].deletedAt = now;
+    tasks[index].updatedAt = now;
+
     save(tasks);
+    return tasks[index];
   }
 
   function toggleTask(id) {
@@ -215,6 +239,10 @@ const TaskStore = (function () {
     const tagFilter = filters.tag || "";
 
     return tasks.filter(function (task) {
+      if (task.deleted) {
+        return false;
+      }
+
       const title = String(task.title || "").toLowerCase();
       const description = String(task.description || "").toLowerCase();
       const status = getStatus(task);
@@ -238,15 +266,19 @@ const TaskStore = (function () {
   }
 
   function buildSummary(tasks) {
+    const visibleTasks = tasks.filter(function (task) {
+      return !task.deleted;
+    });
+
     return {
-      total: tasks.length,
-      pending: tasks.filter(function (task) {
+      total: visibleTasks.length,
+      pending: visibleTasks.filter(function (task) {
         return !task.completed;
       }).length,
-      completed: tasks.filter(function (task) {
+      completed: visibleTasks.filter(function (task) {
         return task.completed;
       }).length,
-      overdue: tasks.filter(function (task) {
+      overdue: visibleTasks.filter(function (task) {
         return getStatus(task) === "overdue";
       }).length
     };
@@ -256,7 +288,7 @@ const TaskStore = (function () {
     const counts = {};
 
     tasks.forEach(function (task) {
-      if (!Array.isArray(task.hashtags)) {
+      if (task.deleted || !Array.isArray(task.hashtags)) {
         return;
       }
 
@@ -286,7 +318,7 @@ const TaskStore = (function () {
 
     return smartSort(tasks)
       .filter(function (task) {
-        return !task.completed;
+        return !task.completed && !task.deleted;
       })
       .slice(0, max);
   }
@@ -294,6 +326,8 @@ const TaskStore = (function () {
   return {
     load: load,
     save: save,
+    saveLastSync: saveLastSync,
+    getLastSync: getLastSync,
     createTask: createTask,
     updateTask: updateTask,
     deleteTask: deleteTask,

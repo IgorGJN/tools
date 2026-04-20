@@ -1,5 +1,5 @@
 const TaskSync = (function () {
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwvJiRo_jqRiVVVE-fE8wm9vLGLYgKNEZ0kjaQV86Di1q1I4mOjEXGtqWmG1j37ao2mZg/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyxG252OTEy0hv36D1T2BiD4GkQL_xvF-HRzxqE3nCTb1NlH4dDQm1DgMI4VC9JZyUuow/exec";
 
   function normalizeRemoteTask(task) {
     return {
@@ -20,7 +20,11 @@ const TaskSync = (function () {
         task.completed === true ||
         String(task.completed).toLowerCase() === "true",
       createdAt: task.createdAt,
-      updatedAt: task.updatedAt
+      updatedAt: task.updatedAt,
+      deleted:
+        task.deleted === true ||
+        String(task.deleted).toLowerCase() === "true",
+      deletedAt: task.deletedAt || ""
     };
   }
 
@@ -34,7 +38,9 @@ const TaskSync = (function () {
       hashtags: Array.isArray(task.hashtags) ? task.hashtags.join(",") : "",
       completed: task.completed,
       createdAt: task.createdAt,
-      updatedAt: task.updatedAt
+      updatedAt: task.updatedAt,
+      deleted: task.deleted === true,
+      deletedAt: task.deletedAt || ""
     };
   }
 
