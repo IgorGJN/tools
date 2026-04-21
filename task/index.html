@@ -15,6 +15,16 @@
   <link rel="stylesheet" href="./css/tasks.css"/>
   <link rel="stylesheet" href="./css/popup.css">
   <link rel="stylesheet" href="./css/load.css">
+
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#7c9cff" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Tarefas" />
+
+
 </head>
 <body>
 
@@ -389,6 +399,19 @@
   <script src="./js/tasks-app.js"></script>
   <script src="./js/tasks-calendar.js"></script>
   <script src="./js/popup.js"></script>
+
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () {
+        navigator.serviceWorker
+          .register("./service-worker.js")
+          .catch(function (error) {
+            console.error("Erro ao registrar o service worker:", error);
+          });
+      });
+    }
+  </script>
 
 </body>
 </html>
