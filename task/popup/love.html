@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eu te amo</title>
+  <style>
+    :root {
+      --bg-1: #120018;
+      --bg-2: #2b0b3f;
+      --bg-3: #ff4d8d;
+      --text: #ffffff;
+      --soft: rgba(255,255,255,0.82);
+      --glass: rgba(255,255,255,0.12);
+      --border: rgba(255,255,255,0.22);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      font-family: Arial, Helvetica, sans-serif;
+      background: radial-gradient(circle at top, #4d0d68 0%, var(--bg-2) 35%, var(--bg-1) 100%);
+      color: var(--text);
+    }
+
+    body {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .background-glow,
+    .background-glow::before,
+    .background-glow::after {
+      position: absolute;
+      inset: auto;
+      content: "";
+      border-radius: 50%;
+      filter: blur(60px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .background-glow {
+      width: 34vw;
+      height: 34vw;
+      min-width: 240px;
+      min-height: 240px;
+      max-width: 480px;
+      max-height: 480px;
+      background: rgba(255, 77, 141, 0.24);
+      top: 8%;
+      left: 8%;
+      animation: floatGlow 10s ease-in-out infinite;
+    }
+
+    .background-glow::before {
+      width: 28vw;
+      height: 28vw;
+      min-width: 180px;
+      min-height: 180px;
+      background: rgba(255, 255, 255, 0.12);
+      top: 48vh;
+      right: -12vw;
+      animation: floatGlow 12s ease-in-out infinite reverse;
+    }
+
+    .background-glow::after {
+      width: 24vw;
+      height: 24vw;
+      min-width: 160px;
+      min-height: 160px;
+      background: rgba(255, 120, 180, 0.16);
+      bottom: 6vh;
+      left: 48vw;
+      animation: floatGlow 14s ease-in-out infinite;
+    }
+
+    .hearts {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .heart {
+      position: absolute;
+      bottom: -40px;
+      color: rgba(255,255,255,0.75);
+      animation: rise linear forwards;
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+      user-select: none;
+    }
+
+    .card {
+      position: relative;
+      z-index: 2;
+      width: min(900px, 100%);
+      padding: clamp(24px, 5vw, 56px);
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 32px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,77,141,0.1), rgba(255,255,255,0.08));
+      border-radius: inherit;
+      z-index: -1;
+      opacity: 0.9;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: var(--soft);
+      font-size: clamp(0.8rem, 1.7vw, 1rem);
+      margin-bottom: 22px;
+      letter-spacing: 0.03em;
+    }
+
+    .title {
+      font-size: clamp(2.8rem, 10vw, 7rem);
+      line-height: 0.95;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 18px;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.28);
+      animation: pulseText 3s ease-in-out infinite;
+    }
+
+    .gradient-text {
+      display: inline-block;
+      background: linear-gradient(90deg, #ffffff 0%, #ffd5e7 25%, #ff7cab 55%, #fff0f6 100%);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: shine 5s linear infinite;
+    }
+
+    .subtitle {
+      max-width: 680px;
+      margin: 0 auto;
+      font-size: clamp(1rem, 2.3vw, 1.3rem);
+      line-height: 1.7;
+      color: var(--soft);
+    }
+
+    .actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      font-size: 1rem;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      padding: 14px 22px;
+      border-radius: 16px;
+      font-weight: 700;
+      min-width: 180px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff6a9e, #ff2f7f);
+      color: white;
+      box-shadow: 0 12px 24px rgba(255, 47, 127, 0.28);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+
+    .btn-primary:hover,
+    .btn-secondary:hover {
+      transform: translateY(-2px) scale(1.02);
+    }
+
+    .btn-primary:active,
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    .signature {
+      margin-top: 22px;
+      font-size: clamp(0.9rem, 1.8vw, 1rem);
+      color: rgba(255,255,255,0.72);
+    }
+
+    .big-heart {
+      position: absolute;
+      right: clamp(12px, 2vw, 20px);
+      top: clamp(10px, 2vw, 18px);
+      font-size: clamp(1.5rem, 4vw, 2.3rem);
+      animation: heartbeat 1.5s ease-in-out infinite;
+      opacity: 0.9;
+    }
+
+    .sparkles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
+      box-shadow: 0 0 14px rgba(255,255,255,0.9);
+      animation: twinkle 2.8s ease-in-out infinite;
+    }
+
+    .message-popup {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(18, 0, 24, 0.82);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.16);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      z-index: 5;
+      font-size: 0.95rem;
+      text-align: center;
+      max-width: min(92vw, 500px);
+    }
+
+    .message-popup.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @keyframes rise {
+      0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-110vh) scale(1.15);
+        opacity: 0;
+      }
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.08); }
+      40% { transform: scale(0.96); }
+      60% { transform: scale(1.14); }
+    }
+
+    @keyframes pulseText {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes shine {
+      to { background-position: 200% center; }
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; transform: scale(0.7); }
+      50% { opacity: 1; transform: scale(1.35); }
+    }
+
+    @keyframes floatGlow {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(18px) translateX(10px); }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+
+      .card {
+        border-radius: 24px;
+      }
+
+      .actions {
+        gap: 12px;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+        max-width: 320px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .badge {
+        padding: 8px 14px;
+      }
+
+      .subtitle {
+        line-height: 1.55;
+      }
+
+      .signature {
+        margin-top: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-glow"></div>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="card">
+    <div class="sparkles" id="sparkles"></div>
+    <div class="big-heart">❤</div>
+
+
+    <h1 class="title">
+      <span class="gradient-text">Eu te amo</span>
+    </h1>
+
+    <p class="subtitle">
+    
+    </p>
+
+    <div class="actions">
+      <button class="btn-primary" id="loveButton">Enviar mais amor</button>
+      <button class="btn-secondary" id="surpriseButton">Surpresa romântica</button>
+    </div>
+
+    <p class="signature"></p>
+  </div>
+
+  <div class="message-popup" id="messagePopup"></div>
+
+  <script>
+    const heartsContainer = document.getElementById('hearts');
+    const sparklesContainer = document.getElementById('sparkles');
+    const loveButton = document.getElementById('loveButton');
+    const surpriseButton = document.getElementById('surpriseButton');
+    const messagePopup = document.getElementById('messagePopup');
+
+    const romanticMessages = [
+      'Você deixa tudo mais bonito.',
+      'Meu lugar favorito é perto de você.',
+      'Seu sorriso tem endereço no meu coração.',
+      'Amar você é a parte mais linda do meu dia.',
+      'Com você, até o simples fica inesquecível.'
+    ];
+
+    function createHeart(burst = false) {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.innerHTML = Math.random() > 0.5 ? '❤' : '💖';
+
+      const left = burst ? 40 + Math.random() * 20 : Math.random() * 100;
+      const duration = burst ? 3 + Math.random() * 2 : 6 + Math.random() * 5;
+      const size = burst ? 18 + Math.random() * 26 : 12 + Math.random() * 24;
+      const delay = Math.random() * 0.4;
+
+      heart.style.left = left + 'vw';
+      heart.style.fontSize = size + 'px';
+      heart.style.animationDuration = duration + 's';
+      heart.style.animationDelay = delay + 's';
+      heart.style.opacity = 0.75 + Math.random() * 0.25;
+
+      heartsContainer.appendChild(heart);
+
+      setTimeout(() => {
+        heart.remove();
+      }, (duration + delay) * 1000 + 300);
+    }
+
+    function createHeartBurst(total = 18) {
+      for (let i = 0; i < total; i++) {
+        setTimeout(() => createHeart(true), i * 90);
+      }
+    }
+
+    function autoHearts() {
+      createHeart(false);
+      const next = window.innerWidth < 600 ? 900 : 650;
+      setTimeout(autoHearts, next);
+    }
+
+    function createSparkles() {
+      const amount = window.innerWidth < 600 ? 16 : 26;
+      sparklesContainer.innerHTML = '';
+
+      for (let i = 0; i < amount; i++) {
+        const sparkle = document.createElement('span');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = Math.random() * 100 + '%';
+        sparkle.style.top = Math.random() * 100 + '%';
+        sparkle.style.animationDelay = (Math.random() * 2.5) + 's';
+        sparkle.style.animationDuration = (2 + Math.random() * 2.8) + 's';
+        sparklesContainer.appendChild(sparkle);
+      }
+    }
+
+    function showMessage(text) {
+      messagePopup.textContent = text;
+      messagePopup.classList.add('show');
+      clearTimeout(showMessage.timeout);
+      showMessage.timeout = setTimeout(() => {
+        messagePopup.classList.remove('show');
+      }, 2600);
+    }
+
+    loveButton.addEventListener('click', () => {
+      createHeartBurst(22);
+      showMessage('Mais amor enviado com sucesso.');
+    });
+
+    surpriseButton.addEventListener('click', () => {
+      const randomMessage = romanticMessages[Math.floor(Math.random() * romanticMessages.length)];
+      createHeartBurst(14);
+      showMessage(randomMessage);
+    });
+
+    window.addEventListener('resize', createSparkles);
+
+    createSparkles();
+    autoHearts();
+  </script>
+</body>
+</html>

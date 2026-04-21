@@ -178,6 +178,8 @@ const App = (function () {
     }, 2000);
   }
 
+  PopupNews.init();
+
   function updateRecurrenceVisibility() {
     if (!refs.taskRecurring || !refs.recurrenceFields) {
       return;
