@@ -12,12 +12,20 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="./css/tasks.css" />
+  <link rel="stylesheet" href="./css/tasks.css"/>
   <link rel="stylesheet" href="./css/popup.css">
+  <link rel="stylesheet" href="./css/load.css">
 </head>
 <body>
+
+  <div id="appLoader" class="app-loader">
+  <div class="loader-content">
+    <div class="loader-orb"></div>
+    <p class="loader-text">Acessando agenda...</p>
+  </div>
+</div>
   
-  <div class="app-shell">
+  <div class="app-shell app-shell-preload" id="appShell">
     <header class="topbar">
       <div>
         <p class="eyebrow">Ferramenta</p>
@@ -375,11 +383,12 @@
 
 
 
-  <script src="./js/popup.js"></script>
   <script src="./js/tasks-data.js"></script>
   <script src="./js/tasks-ui.js"></script>
   <script src="./js/tasks-sync.js"></script>
   <script src="./js/tasks-app.js"></script>
   <script src="./js/tasks-calendar.js"></script>
+  <script src="./js/popup.js"></script>
+
 </body>
 </html>

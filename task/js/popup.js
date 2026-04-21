@@ -1,7 +1,7 @@
 const PopupNews = (function () {
 
   const CONFIG = {
-    popupId: "love6",
+    popupId: "love90",
     enabled: true,
     htmlPath: "popup.html"
   };

@@ -55,7 +55,9 @@ const App = (function () {
     authLoadingText: document.getElementById("authLoadingText"),
     authUsername: document.getElementById("authUsername"),
     authPassword: document.getElementById("authPassword"),
-    authError: document.getElementById("authError")
+    authError: document.getElementById("authError"),
+    appLoader: document.getElementById("appLoader"),
+    appShell: document.getElementById("appShell"),
   };
 
   function getAuthStorage() {
@@ -93,6 +95,30 @@ const App = (function () {
     refs.loadingOverlay.setAttribute("aria-hidden", "true");
   }
 
+  function showAppLoader(text) {
+  if (!refs.appLoader) return;
+
+  const textEl = refs.appLoader.querySelector(".loader-text");
+  if (textEl && text) {
+    textEl.textContent = text;
+  }
+
+  refs.appLoader.classList.remove("hidden");
+}
+
+function hideAppLoader() {
+  if (!refs.appLoader) return;
+
+  refs.appLoader.classList.add("hidden");
+}
+
+function revealAppShell() {
+  if (!refs.appShell) return;
+
+  refs.appShell.classList.remove("app-shell-preload");
+  refs.appShell.classList.add("app-shell-ready");
+}
+
   function openAuthLoading(text) {
     refs.authModal.classList.remove("hidden");
     refs.authModal.setAttribute("aria-hidden", "false");
@@ -104,19 +130,22 @@ const App = (function () {
   }
 
   function openAuthForm(errorText) {
-    refs.authModal.classList.remove("hidden");
-    refs.authModal.setAttribute("aria-hidden", "false");
-    refs.authLoadingState.classList.add("hidden");
-    refs.authForm.classList.remove("hidden");
+  refs.authModal.classList.remove("hidden");
+  refs.authModal.setAttribute("aria-hidden", "false");
+  refs.authLoadingState.classList.add("hidden");
+  refs.authForm.classList.remove("hidden");
 
-    if (errorText) {
-      refs.authError.textContent = errorText;
-      refs.authError.classList.remove("hidden");
-    } else {
-      refs.authError.textContent = "";
-      refs.authError.classList.add("hidden");
-    }
+  revealAppShell();
+  hideAppLoader();
+
+  if (errorText) {
+    refs.authError.textContent = errorText;
+    refs.authError.classList.remove("hidden");
+  } else {
+    refs.authError.textContent = "";
+    refs.authError.classList.add("hidden");
   }
+}
 
   function closeAuthModal() {
     refs.authModal.classList.add("hidden");
@@ -177,8 +206,6 @@ const App = (function () {
       refs.syncBtn.disabled = false;
     }, 2000);
   }
-
-  PopupNews.init();
 
   function updateRecurrenceVisibility() {
     if (!refs.taskRecurring || !refs.recurrenceFields) {
@@ -622,58 +649,92 @@ const App = (function () {
     }
 
     try {
-      openAuthLoading("Entrando...");
-      const response = await TaskSync.login(username, password);
-      state.auth = { username: username, password: password };
-      state.user = response.user || null;
-      saveAuthStorage(state.auth);
-      closeAuthModal();
-      renderUserSessionInfo();
-      await initialSync();
-    } catch (error) {
-      console.error("Erro no login:", error);
-      openAuthForm(error.message || "Falha ao entrar.");
-    }
+  openAuthLoading("Entrando...");
+  const response = await TaskSync.login(username, password);
+
+  state.auth = { username: username, password: password };
+  state.user = response.user || null;
+
+  saveAuthStorage(state.auth);
+
+  closeAuthModal();
+  renderUserSessionInfo();
+
+  await initialSync();
+
+  // libera o app com animação
+  revealAppShell();
+  hideAppLoader();
+
+  if (window.PopupNews && typeof PopupNews.init === "function") {
+    PopupNews.init();
+  }
+
+} catch (error) {
+  console.error("Erro no login:", error);
+
+  // mostra o formulário e tira o loader inicial
+  revealAppShell();
+  hideAppLoader();
+
+  openAuthForm(error.message || "Falha ao entrar.");
+}
   }
 
   async function bootstrapAuth() {
-    const savedAuth = getAuthStorage();
+  const savedAuth = getAuthStorage();
 
-    if (!savedAuth || !savedAuth.username || !savedAuth.password) {
-      openAuthForm();
-      return;
-    }
-
-    try {
-      openAuthLoading("Validando sessão salva...");
-      const response = await TaskSync.validateSession(savedAuth);
-      state.auth = savedAuth;
-      state.user = response.user || null;
-      closeAuthModal();
-      renderUserSessionInfo();
-      await initialSync();
-    } catch (error) {
-      console.error("Erro ao validar sessão:", error);
-      clearAuthStorage();
-      state.auth = null;
-      state.user = null;
-      renderUserSessionInfo();
-      openAuthForm(error.message || "Sua sessão expirou. Entre novamente.");
-    }
+  if (!savedAuth || !savedAuth.username || !savedAuth.password) {
+    openAuthForm();
+    return;
   }
 
-  function forceLogout(message) {
+  try {
+    openAuthLoading("Validando sessão salva...");
+    const response = await TaskSync.validateSession(savedAuth);
+
+    state.auth = savedAuth;
+    state.user = response.user || null;
+
+    closeAuthModal();
+    renderUserSessionInfo();
+
+    await initialSync();
+
+    revealAppShell();
+    hideAppLoader();
+
+    if (typeof PopupNews !== "undefined" && typeof PopupNews.init === "function") {
+  setTimeout(function () {
+    PopupNews.init();
+  }, 100);
+}
+
+  } catch (error) {
+    console.error("Erro ao validar sessão:", error);
+
     clearAuthStorage();
     state.auth = null;
     state.user = null;
-    TaskStore.setTasks([]);
+
     renderUserSessionInfo();
-    refresh();
-    openAuthForm(message || "");
+    openAuthForm(error.message || "Sua sessão expirou. Entre novamente.");
   }
+}
+
+  function forceLogout(message) {
+  clearAuthStorage();
+  state.auth = null;
+  state.user = null;
+  TaskStore.setTasks([]);
+  renderUserSessionInfo();
+  refresh();
+  openAuthForm(message || "");
+}
 
   async function init() {
     applySavedTheme();
+    showAppLoader("Acessando agenda...");
     hideLoading();
     bindEvents();
     refresh();
