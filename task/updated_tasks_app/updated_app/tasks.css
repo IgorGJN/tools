@@ -746,15 +746,9 @@ textarea {
 
 .calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, 1fr);
   gap: 8px;
   margin-bottom: 8px;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
 }
 
 .calendar-weekdays div {
@@ -765,13 +759,14 @@ textarea {
   padding: 6px 0;
 }
 
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
 
 .calendar-day {
   min-height: 96px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
   background: var(--calendar-day-bg);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -1069,49 +1064,4 @@ textarea {
 .calendar-body-hidden .calendar-weekdays,
 .calendar-body-hidden .calendar-grid {
   display: none;
-}
-
-/* ===== FIX DEFINITIVO DO CALENDÁRIO ===== */
-
-.calendar-grid > * {
-  min-width: 0;
-}
-
-.calendar-weekdays > div {
-  min-width: 0;
-}
-
-.calendar-day-top,
-.calendar-day-items,
-.calendar-task-line {
-  min-width: 0;
-  max-width: 100%;
-}
-
-.calendar-day-items {
-  overflow: hidden;
-}
-
-.calendar-task-line {
-  overflow: hidden;
-}
-
-.calendar-task-title {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.calendar-day-number,
-.calendar-day-count {
-  flex-shrink: 0;
-}
-
-/* Garante que o botão dentro do grid possa encolher */
-.calendar-grid button {
-  min-width: 0;
 }

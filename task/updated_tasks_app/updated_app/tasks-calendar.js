@@ -121,10 +121,10 @@ const TaskCalendar = (function () {
 
     if (state.collapsed) {
       refs.calendarCard.classList.add("calendar-body-hidden");
-      refs.toggleCalendarBtn.textContent = "Exibir";
+      refs.toggleCalendarBtn.textContent = "Mostrar calendário";
     } else {
       refs.calendarCard.classList.remove("calendar-body-hidden");
-      refs.toggleCalendarBtn.textContent = "Ocultar";
+      refs.toggleCalendarBtn.textContent = "Ocultar calendário";
     }
   }
 
