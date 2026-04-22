@@ -4,6 +4,8 @@ const App = (function () {
   const OFFLINE_SESSION_MAX_HOURS = 48;
   const OFFLINE_SESSION_MAX_MS = OFFLINE_SESSION_MAX_HOURS * 60 * 60 * 1000;
 
+  const THEMES = ["default", "light", "blue", "green", "red", "yellow"];
+
   const state = {
     filters: {
       search: "",
@@ -1165,15 +1167,34 @@ const App = (function () {
     openAuthForm(message || "");
   }
 
-  function applySavedTheme() {
-    const saved = localStorage.getItem("theme");
+  function applyTheme(theme) {
+  document.documentElement.classList.remove(
+    "light",
+    "blue",
+    "green",
+    "red",
+    "yellow"
+  );
 
-    if (saved === "light") {
-      document.documentElement.classList.add("light");
-    }
-
-    updateThemeIcon();
+  if (theme && theme !== "default") {
+    document.documentElement.classList.add(theme);
   }
+
+  localStorage.setItem("theme", theme || "default");
+  updateThemeIcon();
+}
+
+function applySavedTheme() {
+  const saved = localStorage.getItem("theme") || "default";
+  applyTheme(saved);
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem("theme") || "default";
+  const index = THEMES.indexOf(current);
+  const next = THEMES[(index + 1) % THEMES.length];
+  applyTheme(next);
+}
 
   function toggleTheme() {
     const isLight = document.documentElement.classList.toggle("light");
@@ -1363,9 +1384,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function updateThemeIcon() {
   const btn = document.getElementById("themeToggleBtn");
-  const isLight = document.documentElement.classList.contains("light");
+  if (!btn) return;
 
-  if (btn) {
-    btn.textContent = isLight ? "🌙" : "☀️";
-  }
+  const current = localStorage.getItem("theme") || "default";
+
+  const labels = {
+    default: "🌙",
+    light: "☀️",
+    blue: "🔵",
+    green: "🟢",
+    red: "🔴",
+    yellow: "🟡"
+  };
+
+  btn.textContent = labels[current] || "🎨";
 }
