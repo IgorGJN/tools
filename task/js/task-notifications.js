@@ -220,7 +220,8 @@ window.TaskNotifications = (function () {
         remindAt,
         key: `${task.id}::timed::${task.date}::${task.time}::${settings.hoursBefore}`,
         title: task.title || "Lembrete de tarefa",
-        body: `Hoje às ${task.time} • lembrete ${settings.hoursBefore}h antes.`
+        body: `Hoje às ${task.time}` 
+        //• lembrete ${settings.hoursBefore}h antes.`
       };
     }
 
@@ -232,7 +233,8 @@ window.TaskNotifications = (function () {
       remindAt,
       key: `${task.id}::daily::${task.date}::${settings.dailyReminderTime}`,
       title: task.title || "Lembrete de tarefa",
-      body: `Tarefa pendente para hoje • aviso das ${settings.dailyReminderTime}.`
+      body: `Tarefa pendente para hoje` 
+    //• aviso das ${settings.dailyReminderTime}.`
     };
   }
 
