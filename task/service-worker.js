@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v2.0.0";
+const CACHE_VERSION = "v2.0.2";
 const STATIC_CACHE = `tasks-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `tasks-runtime-${CACHE_VERSION}`;
 

@@ -1,6 +1,6 @@
 const PopupNews = (function () {
   const CONFIG = {
-    popupId: "v.2.0.0",
+    popupId: "v.2.0.2",
     enabled: true,
     delayMs: 600
   };
