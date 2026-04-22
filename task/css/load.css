@@ -10,14 +10,14 @@
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.25), transparent 35%),
-    radial-gradient(circle at 80% 80%, rgba(109, 140, 255, 0.18), transparent 35%),
+    radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.16), transparent 35%),
+    radial-gradient(circle at 80% 80%, rgba(109, 140, 255, 0.14), transparent 35%),
     linear-gradient(180deg, var(--bg), var(--bg-secondary));
   opacity: 1;
   visibility: visible;
   transition:
-    opacity 0.45s ease,
-    visibility 0.45s ease;
+    opacity 0.26s ease,
+    visibility 0.26s ease;
 }
 
 .app-loader.hidden {
@@ -28,27 +28,28 @@
 
 .loader-content {
   text-align: center;
-  padding: 28px 24px;
-  border-radius: 24px;
+  padding: 18px 18px;
+  border-radius: 20px;
   background: linear-gradient(
     180deg,
-    rgba(255,255,255,0.04),
+    rgba(255,255,255,0.035),
     rgba(255,255,255,0.02)
   );
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-soft, var(--shadow));
   backdrop-filter: blur(10px);
-  min-width: 260px;
+  min-width: 220px;
+  max-width: min(88vw, 320px);
 }
 
 .loader-orb {
-  width: 140px;
+  width: 112px;
   height: 4px;
   border-radius: 999px;
   background: rgba(255,255,255,0.06);
   position: relative;
   overflow: hidden;
-  margin: 0 auto 18px;
+  margin: 0 auto 14px;
 }
 
 .loader-orb::after {
@@ -66,15 +67,16 @@
     var(--primary-strong),
     transparent
   );
-  animation: loaderSlide 1.4s ease-in-out infinite;
-  filter: blur(2px);
+  animation: loaderSlide 1.15s ease-in-out infinite;
+  filter: blur(1px);
 }
 
 .loader-text {
   margin: 0;
   color: var(--text);
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
+  font-size: 14px;
 }
 
 @keyframes loaderSlide {
@@ -86,18 +88,18 @@
   }
 }
 
-/* App entra suavemente */
+/* App entra suavemente, mas mais rápido */
 .app-shell {
   transition:
-    opacity 0.5s ease,
-    transform 0.5s ease,
-    filter 0.5s ease;
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    filter 0.28s ease;
 }
 
 .app-shell-preload {
   opacity: 0;
-  transform: translateY(14px) scale(0.99);
-  filter: blur(4px);
+  transform: translateY(8px) scale(0.995);
+  filter: blur(2px);
   pointer-events: none;
 }
 
@@ -109,31 +111,31 @@
 }
 
 /* =========================
-   LOGIN MODERNO
+   LOGIN / AUTENTICAÇÃO
 ========================= */
 
 #authModal {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(10, 14, 30, 0.65);
-  backdrop-filter: blur(8px);
+  background: rgba(10, 14, 30, 0.54);
+  backdrop-filter: blur(7px);
 }
 
 #authModal .modal-content {
   width: min(92%, 380px);
-  padding: 28px;
+  padding: 24px;
   border-radius: 20px;
   background: var(--panel-strong);
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
-  animation: authFadeIn 0.3s ease;
+  animation: authFadeIn 0.22s ease;
 }
 
 @keyframes authFadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(8px) scale(0.985);
   }
   to {
     opacity: 1;
@@ -143,7 +145,7 @@
 
 #authModal h2 {
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   color: var(--text);
 }
 
@@ -176,4 +178,46 @@
   margin-top: 10px;
   text-align: center;
   color: var(--danger);
+}
+
+/* =========================
+   LOADING OVERLAY SECUNDÁRIO
+========================= */
+
+.loading-overlay {
+  background: rgba(5, 10, 20, 0.38);
+  backdrop-filter: blur(3px);
+}
+
+.loading-box {
+  min-width: 220px;
+  padding: 20px 18px;
+  border-radius: 18px;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 12px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+  .loader-content {
+    min-width: 200px;
+    padding: 16px;
+    border-radius: 18px;
+  }
+
+  .loader-orb {
+    width: 96px;
+    margin-bottom: 12px;
+  }
+
+  .loader-text {
+    font-size: 13px;
+  }
 }

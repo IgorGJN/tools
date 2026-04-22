@@ -8,8 +8,16 @@ const TaskStore = (function () {
     return JSON.parse(JSON.stringify(value));
   }
 
+  function notifyLocalChange() {
+    if (window.TaskSync && typeof window.TaskSync.markPendingLocalChanges === "function") {
+      window.TaskSync.markPendingLocalChanges(true);
+    }
+  }
+
   function loadRaw() {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw =
+      localStorage.getItem(STORAGE_KEY) ||
+      localStorage.getItem(LEGACY_STORAGE_KEY);
 
     if (!raw) {
       return [];
@@ -30,7 +38,10 @@ const TaskStore = (function () {
         new Set(
           input
             .map(function (tag) {
-              return String(tag || "").trim().replace(/^#+/, "").toLowerCase();
+              return String(tag || "")
+                .trim()
+                .replace(/^#+/, "")
+                .toLowerCase();
             })
             .filter(Boolean)
         )
@@ -148,13 +159,20 @@ const TaskStore = (function () {
       endDate: endDate,
       endTime: endTime,
       hashtags: normalizeHashtags(task.hashtags || ""),
-      completed: task.completed === true || String(task.completed).toLowerCase() === "true",
+      completed:
+        task.completed === true ||
+        String(task.completed).toLowerCase() === "true",
       createdAt: createdAt,
       updatedAt: updatedAt,
-      deleted: task.deleted === true || String(task.deleted).toLowerCase() === "true",
+      deleted:
+        task.deleted === true || String(task.deleted).toLowerCase() === "true",
       deletedAt: String(task.deletedAt || "").trim(),
-      recurring: task.recurring === true || String(task.recurring).toLowerCase() === "true",
-      recurrenceType: task.recurring ? String(task.recurrenceType || "weekly") : String(task.recurrenceType || ""),
+      recurring:
+        task.recurring === true ||
+        String(task.recurring).toLowerCase() === "true",
+      recurrenceType: task.recurring
+        ? String(task.recurrenceType || "weekly")
+        : String(task.recurrenceType || ""),
       recurrenceInterval: normalizeInterval(task.recurrenceInterval),
       parentTaskId: String(task.parentTaskId || "").trim(),
       owner: String(task.owner || "").trim().toLowerCase()
@@ -165,7 +183,12 @@ const TaskStore = (function () {
       normalized.endTime = "";
     }
 
-    if (normalized.endDate === normalized.date && normalized.endTime && normalized.time && normalized.endTime < normalized.time) {
+    if (
+      normalized.endDate === normalized.date &&
+      normalized.endTime &&
+      normalized.time &&
+      normalized.endTime < normalized.time
+    ) {
       normalized.endDate = "";
       normalized.endTime = "";
     }
@@ -175,16 +198,35 @@ const TaskStore = (function () {
 
   function load() {
     const tasks = loadRaw().map(normalizeTask);
-    save(tasks);
+    save(tasks, { markPending: false });
     return tasks;
   }
 
-  function save(tasks) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.map(normalizeTask)));
+  function save(tasks, options) {
+    const config = {
+      markPending: false,
+      ...options
+    };
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(tasks.map(normalizeTask))
+    );
+
+    if (config.markPending) {
+      notifyLocalChange();
+    }
   }
 
   function saveLastSync(dateString) {
     localStorage.setItem(LAST_SYNC_KEY, String(dateString || ""));
+
+    if (window.TaskSync && typeof window.TaskSync.saveSyncMeta === "function") {
+      window.TaskSync.saveSyncMeta({
+        lastSuccessAt: String(dateString || ""),
+        pendingLocalChanges: false
+      });
+    }
   }
 
   function getLastSync() {
@@ -210,19 +252,27 @@ const TaskStore = (function () {
       deleted: false,
       deletedAt: "",
       recurring: payload.recurring === true,
-      recurrenceType: payload.recurring ? String(payload.recurrenceType || "weekly") : "",
-      recurrenceInterval: payload.recurring ? normalizeInterval(payload.recurrenceInterval) : 1,
+      recurrenceType: payload.recurring
+        ? String(payload.recurrenceType || "weekly")
+        : "",
+      recurrenceInterval: payload.recurring
+        ? normalizeInterval(payload.recurrenceInterval)
+        : 1,
       parentTaskId: String(payload.parentTaskId || ""),
       owner: String(owner || "").trim().toLowerCase()
     });
 
     tasks.push(task);
-    save(tasks);
+    save(tasks, { markPending: true });
     return task;
   }
 
   function canEditTask(task, currentUser) {
-    return !!task && !!currentUser && String(task.owner || "") === String(currentUser || "").toLowerCase();
+    return (
+      !!task &&
+      !!currentUser &&
+      String(task.owner || "") === String(currentUser || "").toLowerCase()
+    );
   }
 
   function updateTask(id, payload, currentUser) {
@@ -245,12 +295,16 @@ const TaskStore = (function () {
       endTime: payload.endTime,
       hashtags: payload.hashtags,
       recurring: payload.recurring === true,
-      recurrenceType: payload.recurring ? String(payload.recurrenceType || "weekly") : "",
-      recurrenceInterval: payload.recurring ? normalizeInterval(payload.recurrenceInterval) : 1,
+      recurrenceType: payload.recurring
+        ? String(payload.recurrenceType || "weekly")
+        : "",
+      recurrenceInterval: payload.recurring
+        ? normalizeInterval(payload.recurrenceInterval)
+        : 1,
       updatedAt: new Date().toISOString()
     });
 
-    save(tasks);
+    save(tasks, { markPending: true });
     return tasks[index];
   }
 
@@ -270,13 +324,17 @@ const TaskStore = (function () {
     tasks[index].deletedAt = now;
     tasks[index].updatedAt = now;
 
-    save(tasks);
+    save(tasks, { markPending: true });
     return tasks[index];
   }
 
   function addDays(dateString, amount) {
     const parts = dateString.split("-");
-    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    const date = new Date(
+      Number(parts[0]),
+      Number(parts[1]) - 1,
+      Number(parts[2])
+    );
     date.setDate(date.getDate() + amount);
 
     const year = date.getFullYear();
@@ -357,10 +415,18 @@ const TaskStore = (function () {
 
   function getEndDateTimeValue(task) {
     if (task.endDate) {
-      return getDateTimeValueFromParts(task.endDate, task.endTime, task.time || "23:59");
+      return getDateTimeValueFromParts(
+        task.endDate,
+        task.endTime,
+        task.time || "23:59"
+      );
     }
 
-    return getDateTimeValueFromParts(task.date, task.time, task.time ? task.time : "23:59");
+    return getDateTimeValueFromParts(
+      task.date,
+      task.time,
+      task.time ? task.time : "23:59"
+    );
   }
 
   function buildDateFromMs(timeValue) {
@@ -400,8 +466,13 @@ const TaskStore = (function () {
     let nextEndTime = "";
 
     if (sourceTask.endDate) {
-      const durationMs = getEndDateTimeValue(sourceTask) - getStartDateTimeValue(sourceTask);
-      const nextStartMs = getDateTimeValueFromParts(nextDate, sourceTask.time, sourceTask.time || "00:00");
+      const durationMs =
+        getEndDateTimeValue(sourceTask) - getStartDateTimeValue(sourceTask);
+      const nextStartMs = getDateTimeValueFromParts(
+        nextDate,
+        sourceTask.time,
+        sourceTask.time || "00:00"
+      );
       const nextEnd = buildDateFromMs(nextStartMs + durationMs);
       nextEndDate = nextEnd.date;
       nextEndTime = sourceTask.endTime ? nextEnd.time : "";
@@ -415,7 +486,9 @@ const TaskStore = (function () {
       time: sourceTask.time || "",
       endDate: nextEndDate,
       endTime: nextEndTime,
-      hashtags: Array.isArray(sourceTask.hashtags) ? sourceTask.hashtags.slice() : [],
+      hashtags: Array.isArray(sourceTask.hashtags)
+        ? sourceTask.hashtags.slice()
+        : [],
       completed: false,
       createdAt: now,
       updatedAt: now,
@@ -451,7 +524,7 @@ const TaskStore = (function () {
       createNextRecurringTask(tasks[index], tasks);
     }
 
-    save(tasks);
+    save(tasks, { markPending: true });
     return tasks[index];
   }
 
@@ -518,7 +591,9 @@ const TaskStore = (function () {
         return dateDiff;
       }
 
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return (
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     });
   }
 
@@ -539,7 +614,9 @@ const TaskStore = (function () {
 
     if (mode === "created-desc") {
       return list.sort(function (a, b) {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       });
     }
 
@@ -584,16 +661,26 @@ const TaskStore = (function () {
 
       const title = String(task.title || "").toLowerCase();
       const description = String(task.description || "").toLowerCase();
+      const joinedTags = Array.isArray(task.hashtags)
+        ? task.hashtags.join(" ").toLowerCase()
+        : "";
       const status = getStatus(task);
 
-      const inText = !search || title.includes(search) || description.includes(search);
+      const inText =
+        !search ||
+        title.includes(search) ||
+        description.includes(search) ||
+        joinedTags.includes(search);
 
       const inStatus =
         statusFilter === "all" ||
         (statusFilter === "pending" && !task.completed) ||
         statusFilter === status;
 
-      const inTag = !tagFilter || (Array.isArray(task.hashtags) && task.hashtags.includes(tagFilter));
+      const inTag =
+        !tagFilter ||
+        (Array.isArray(task.hashtags) && task.hashtags.includes(tagFilter));
+
       const inDate = !dateFilter || taskIntersectsDate(task, dateFilter);
 
       return inText && inStatus && inTag && inDate;
@@ -658,8 +745,10 @@ const TaskStore = (function () {
       .slice(0, max);
   }
 
-  function setTasks(tasks) {
-    save(tasks.map(normalizeTask));
+  function setTasks(tasks, options) {
+    save(tasks.map(normalizeTask), {
+      markPending: options && options.markPending === true
+    });
   }
 
   function getVisibleTasksForUser(tasks, username, visibility) {

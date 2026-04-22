@@ -1,18 +1,40 @@
 const PopupNews = (function () {
   const CONFIG = {
-    popupId: "v402",
-    enabled: true
+    popupId: "v.2.0.0",
+    enabled: true,
+    delayMs: 600
   };
 
   const STORAGE_KEY = "popup_seen_ids";
 
-  function init() {
-    if (!CONFIG.enabled) return;
+  function getSeenPopups() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch (error) {
+      return [];
+    }
+  }
 
+  function saveSeen(id) {
     const seen = getSeenPopups();
-    if (seen.includes(CONFIG.popupId)) return;
 
-    open();
+    if (!seen.includes(id)) {
+      seen.push(id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seen));
+    }
+  }
+
+  function bindEvents() {
+    const closeBtn = document.getElementById("newsCloseBtn");
+    const overlay = document.querySelector(".news-overlay");
+
+    if (closeBtn) {
+      closeBtn.onclick = close;
+    }
+
+    if (overlay) {
+      overlay.onclick = close;
+    }
   }
 
   function open() {
@@ -31,29 +53,20 @@ const PopupNews = (function () {
     saveSeen(CONFIG.popupId);
   }
 
-  function bindEvents() {
-    document.getElementById("newsCloseBtn")?.addEventListener("click", close);
-    document.querySelector(".news-overlay")?.addEventListener("click", close);
-  }
+  function init() {
+    if (!CONFIG.enabled) return;
 
-  function getSeenPopups() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveSeen(id) {
     const seen = getSeenPopups();
+    if (seen.includes(CONFIG.popupId)) return;
 
-    if (!seen.includes(id)) {
-      seen.push(id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seen));
-    }
+    setTimeout(function () {
+      open();
+    }, CONFIG.delayMs);
   }
 
   return {
-    init
+    init: init,
+    open: open,
+    close: close
   };
 })();

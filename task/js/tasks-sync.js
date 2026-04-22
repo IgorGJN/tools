@@ -1,5 +1,44 @@
 const TaskSync = (function () {
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxV6lPXjSzkjU9S_bXQ_RKHpwQLaHdO2Rn2IB0I7f6d_9nHQa01XALpkedxopOzqsmM1A/exec";
+  const WEB_APP_URL =
+    "https://script.google.com/macros/s/AKfycbxV6lPXjSzkjU9S_bXQ_RKHpwQLaHdO2Rn2IB0I7f6d_9nHQa01XALpkedxopOzqsmM1A/exec";
+
+  const META_STORAGE_KEY = "tasks_sync_meta_v1";
+
+  function getSyncMeta() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(META_STORAGE_KEY) || "{}");
+      return {
+        lastAttemptAt: saved.lastAttemptAt || "",
+        lastSuccessAt: saved.lastSuccessAt || "",
+        lastError: saved.lastError || "",
+        pendingLocalChanges:
+          saved.pendingLocalChanges === true || saved.pendingLocalChanges === "true"
+      };
+    } catch (error) {
+      return {
+        lastAttemptAt: "",
+        lastSuccessAt: "",
+        lastError: "",
+        pendingLocalChanges: false
+      };
+    }
+  }
+
+  function saveSyncMeta(nextMeta) {
+    const current = getSyncMeta();
+    const merged = {
+      ...current,
+      ...nextMeta
+    };
+    localStorage.setItem(META_STORAGE_KEY, JSON.stringify(merged));
+    return merged;
+  }
+
+  function markPendingLocalChanges(value) {
+    return saveSyncMeta({
+      pendingLocalChanges: value === true
+    });
+  }
 
   function normalizeRemoteTask(task) {
     return TaskStore.normalizeTask({
@@ -42,7 +81,9 @@ const TaskSync = (function () {
       time: normalized.time,
       endDate: normalized.endDate,
       endTime: normalized.endTime,
-      hashtags: Array.isArray(normalized.hashtags) ? normalized.hashtags.join(",") : "",
+      hashtags: Array.isArray(normalized.hashtags)
+        ? normalized.hashtags.join(",")
+        : "",
       completed: normalized.completed,
       createdAt: normalized.createdAt,
       updatedAt: normalized.updatedAt,
@@ -83,37 +124,69 @@ const TaskSync = (function () {
   }
 
   async function postJson(body) {
-    const response = await fetch(WEB_APP_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(body)
+    saveSyncMeta({
+      lastAttemptAt: new Date().toISOString(),
+      lastError: ""
     });
+
+    let response;
+
+    try {
+      response = await fetch(WEB_APP_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify(body)
+      });
+    } catch (error) {
+      saveSyncMeta({
+        lastError: error && error.message ? error.message : "Falha de rede."
+      });
+      throw error;
+    }
 
     const data = await parseJsonResponse(response);
 
     if (!isSuccessResponse(data)) {
-      throw new Error(getErrorMessage(data, "Erro de comunicação com o Apps Script."));
+      const message = getErrorMessage(
+        data,
+        "Erro de comunicação com o Apps Script."
+      );
+
+      saveSyncMeta({
+        lastError: message
+      });
+
+      throw new Error(message);
     }
+
+    saveSyncMeta({
+      lastSuccessAt: new Date().toISOString(),
+      lastError: ""
+    });
 
     return data;
   }
 
   async function login(username, password) {
-    return postJson({
+    const data = await postJson({
       action: "login",
       username: String(username || "").trim(),
       password: String(password || "").trim()
     });
+
+    return data;
   }
 
   async function validateSession(auth) {
-    return postJson({
+    const data = await postJson({
       action: "validateSession",
       username: String((auth && auth.username) || "").trim(),
       password: String((auth && auth.password) || "").trim()
     });
+
+    return data;
   }
 
   async function fetchRemoteTasks(auth) {
@@ -129,17 +202,64 @@ const TaskSync = (function () {
     };
   }
 
+  function chooseLatestTask(localTask, remoteTask) {
+    const localUpdated = new Date(localTask.updatedAt || localTask.createdAt || 0).getTime();
+    const remoteUpdated = new Date(remoteTask.updatedAt || remoteTask.createdAt || 0).getTime();
+
+    if (localUpdated >= remoteUpdated) {
+      return TaskStore.normalizeTask(localTask);
+    }
+
+    return TaskStore.normalizeTask(remoteTask);
+  }
+
+  function mergeTaskCollections(localTasks, remoteTasks) {
+    const map = new Map();
+
+    (Array.isArray(remoteTasks) ? remoteTasks : []).forEach(function (task) {
+      const normalized = TaskStore.normalizeTask(task);
+      map.set(normalized.id, normalized);
+    });
+
+    (Array.isArray(localTasks) ? localTasks : []).forEach(function (task) {
+      const normalizedLocal = TaskStore.normalizeTask(task);
+
+      if (!map.has(normalizedLocal.id)) {
+        map.set(normalizedLocal.id, normalizedLocal);
+        return;
+      }
+
+      const current = map.get(normalizedLocal.id);
+      map.set(normalizedLocal.id, chooseLatestTask(normalizedLocal, current));
+    });
+
+    return Array.from(map.values()).sort(function (a, b) {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+  }
+
   async function syncTasks(localTasks, auth) {
+    const normalizedLocalTasks = (Array.isArray(localTasks) ? localTasks : []).map(
+      TaskStore.normalizeTask
+    );
+
     const data = await postJson({
       action: "sync",
       username: String((auth && auth.username) || "").trim(),
       password: String((auth && auth.password) || "").trim(),
-      tasks: (Array.isArray(localTasks) ? localTasks : []).map(prepareLocalTask)
+      tasks: normalizedLocalTasks.map(prepareLocalTask)
+    });
+
+    const remoteTasks = getTasksFromResponse(data).map(normalizeRemoteTask);
+    const mergedTasks = mergeTaskCollections(normalizedLocalTasks, remoteTasks);
+
+    saveSyncMeta({
+      pendingLocalChanges: false
     });
 
     return {
       user: data.user || null,
-      tasks: getTasksFromResponse(data).map(normalizeRemoteTask)
+      tasks: mergedTasks
     };
   }
 
@@ -147,6 +267,10 @@ const TaskSync = (function () {
     login: login,
     validateSession: validateSession,
     fetchRemoteTasks: fetchRemoteTasks,
-    syncTasks: syncTasks
+    syncTasks: syncTasks,
+    getSyncMeta: getSyncMeta,
+    saveSyncMeta: saveSyncMeta,
+    markPendingLocalChanges: markPendingLocalChanges,
+    mergeTaskCollections: mergeTaskCollections
   };
 })();

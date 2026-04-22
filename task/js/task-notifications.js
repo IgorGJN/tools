@@ -1,13 +1,16 @@
 window.TaskNotifications = (function () {
   const SETTINGS_KEY = "tasks_notification_settings_v1";
   const SENT_KEY = "tasks_notification_sent_v1";
+  const LAST_PROCESS_KEY = "tasks_notification_last_process_v1";
 
   function getSettings() {
     try {
       const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
       return {
         dailyReminderTime: saved.dailyReminderTime || "06:00",
-        hoursBefore: Number.isFinite(Number(saved.hoursBefore)) ? Number(saved.hoursBefore) : 2
+        hoursBefore: Number.isFinite(Number(saved.hoursBefore))
+          ? Number(saved.hoursBefore)
+          : 2
       };
     } catch (error) {
       return {
@@ -37,6 +40,13 @@ window.TaskNotifications = (function () {
 
   function saveSentMap(map) {
     localStorage.setItem(SENT_KEY, JSON.stringify(map));
+  }
+
+  function saveLastProcessedAt(date) {
+    localStorage.setItem(
+      LAST_PROCESS_KEY,
+      (date || new Date()).toISOString()
+    );
   }
 
   async function registerServiceWorker() {
@@ -123,21 +133,37 @@ window.TaskNotifications = (function () {
 
     const safeTime = String(timeString || "").trim();
     if (!safeTime) {
-      return new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0, 0);
+      return new Date(
+        base.getFullYear(),
+        base.getMonth(),
+        base.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
     }
 
     const parts = safeTime.split(":");
     const hours = Number(parts[0] || 0);
     const minutes = Number(parts[1] || 0);
 
-    return new Date(base.getFullYear(), base.getMonth(), base.getDate(), hours, minutes, 0, 0);
+    return new Date(
+      base.getFullYear(),
+      base.getMonth(),
+      base.getDate(),
+      hours,
+      minutes,
+      0,
+      0
+    );
   }
 
   function formatDateBR(dateString) {
     if (!dateString) return "";
     const parts = String(dateString).split("-");
     if (parts.length !== 3) return dateString;
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
   }
 
   function getTodayAt(timeString) {
@@ -180,7 +206,8 @@ window.TaskNotifications = (function () {
     return !!task && !task.deleted && !task.completed;
   }
 
-  function getReminderPlan(task, now = new Date()) {
+  function getReminderPlan(task, now) {
+    const referenceNow = now || new Date();
     const settings = getSettings();
 
     if (!isPending(task) || !task.date) {
@@ -192,67 +219,115 @@ window.TaskNotifications = (function () {
       return null;
     }
 
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const todayStart = new Date(
+      referenceNow.getFullYear(),
+      referenceNow.getMonth(),
+      referenceNow.getDate(),
+      0,
+      0,
+      0,
+      0
+    );
 
-    // atraso
     if (taskDate < todayStart) {
       const remindAt = getTodayAt(settings.dailyReminderTime);
       return {
         type: "overdue",
-        remindAt,
-        key: `${task.id}::overdue::${task.date}::${remindAt.getFullYear()}-${String(remindAt.getMonth() + 1).padStart(2, "0")}-${String(remindAt.getDate()).padStart(2, "0")}`,
+        remindAt: remindAt,
+        key:
+          task.id +
+          "::overdue::" +
+          task.date +
+          "::" +
+          remindAt.getFullYear() +
+          "-" +
+          String(remindAt.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(remindAt.getDate()).padStart(2, "0"),
         title: task.title || "Tarefa atrasada",
-        body: `Tarefa atrasada desde ${formatDateBR(task.date)}.`
+        body: "Tarefa atrasada desde " + formatDateBR(task.date) + "."
       };
     }
 
-    // com hora
     if (task.time) {
       const taskDateTime = parseLocalDateTime(task.date, task.time);
       if (!taskDateTime) {
         return null;
       }
 
-      const remindAt = new Date(taskDateTime.getTime() - settings.hoursBefore * 60 * 60 * 1000);
+      const remindAt = new Date(
+        taskDateTime.getTime() - settings.hoursBefore * 60 * 60 * 1000
+      );
 
       return {
         type: "timed",
-        remindAt,
-        key: `${task.id}::timed::${task.date}::${task.time}::${settings.hoursBefore}`,
+        remindAt: remindAt,
+        key:
+          task.id +
+          "::timed::" +
+          task.date +
+          "::" +
+          task.time +
+          "::" +
+          settings.hoursBefore,
         title: task.title || "Lembrete de tarefa",
-        body: `Hoje às ${task.time}` 
-        //• lembrete ${settings.hoursBefore}h antes.`
+        body: "Hoje às " + task.time
       };
     }
 
-    // sem hora
     const remindAt = getDateAt(task.date, settings.dailyReminderTime);
 
     return {
       type: "daily",
-      remindAt,
-      key: `${task.id}::daily::${task.date}::${settings.dailyReminderTime}`,
+      remindAt: remindAt,
+      key:
+        task.id +
+        "::daily::" +
+        task.date +
+        "::" +
+        settings.dailyReminderTime,
       title: task.title || "Lembrete de tarefa",
-      body: `Tarefa pendente para hoje` 
-    //• aviso das ${settings.dailyReminderTime}.`
+      body: "Tarefa pendente para hoje"
     };
+  }
+
+  function cleanupSentMap(tasks, sentMap) {
+    const validTaskIds = new Set(
+      (Array.isArray(tasks) ? tasks : []).map(function (task) {
+        return task.id;
+      })
+    );
+
+    const cleaned = {};
+    Object.keys(sentMap || {}).forEach(function (key) {
+      const taskId = String(key).split("::")[0];
+      if (validTaskIds.has(taskId)) {
+        cleaned[key] = sentMap[key];
+      }
+    });
+
+    return cleaned;
   }
 
   async function processTasks(tasks) {
     if (!Array.isArray(tasks) || !tasks.length) {
+      saveLastProcessedAt();
       return;
     }
 
-    if (Notification.permission !== "granted") {
+    if (!("Notification" in window) || Notification.permission !== "granted") {
       return;
     }
 
     const now = new Date();
-    const sentMap = getSentMap();
+    let sentMap = getSentMap();
+    sentMap = cleanupSentMap(tasks, sentMap);
+
     let changed = false;
 
     for (const task of tasks) {
       const plan = getReminderPlan(task, now);
+
       if (!plan || !plan.remindAt) {
         continue;
       }
@@ -260,7 +335,7 @@ window.TaskNotifications = (function () {
       if (now >= plan.remindAt && !sentMap[plan.key]) {
         const ok = await showNotification(plan.title, {
           body: plan.body,
-          tag: `task-${task.id}`
+          tag: "task-" + task.id
         });
 
         if (ok) {
@@ -272,15 +347,20 @@ window.TaskNotifications = (function () {
 
     if (changed) {
       saveSentMap(sentMap);
+    } else {
+      saveSentMap(sentMap);
     }
+
+    saveLastProcessedAt(now);
   }
 
   return {
-    registerServiceWorker,
-    requestPermission,
-    showTestNotification,
-    processTasks,
-    getSettings,
-    saveSettings
+    registerServiceWorker: registerServiceWorker,
+    requestPermission: requestPermission,
+    showTestNotification: showTestNotification,
+    processTasks: processTasks,
+    getSettings: getSettings,
+    saveSettings: saveSettings,
+    getReminderPlan: getReminderPlan
   };
 })();

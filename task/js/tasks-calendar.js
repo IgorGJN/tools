@@ -16,7 +16,8 @@ const TaskCalendar = (function () {
     collapsed: false,
     onDateSelect: null,
     onClear: null,
-    onMonthChange: null
+    onMonthChange: null,
+    lastRenderedTasks: []
   };
 
   function pad(value) {
@@ -24,7 +25,13 @@ const TaskCalendar = (function () {
   }
 
   function toISO(date) {
-    return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+    return (
+      date.getFullYear() +
+      "-" +
+      pad(date.getMonth() + 1) +
+      "-" +
+      pad(date.getDate())
+    );
   }
 
   function parseISO(dateString) {
@@ -81,23 +88,27 @@ const TaskCalendar = (function () {
   function getTasksByDate(tasks) {
     const map = {};
 
-    tasks.forEach(function (task) {
+    (tasks || []).forEach(function (task) {
       if (task.deleted || !task.date) {
         return;
       }
 
       const start = parseISO(task.date);
       const end = parseISO(task.endDate || task.date);
+
       if (!start || !end) {
         return;
       }
 
       const cursor = new Date(start);
+
       while (cursor.getTime() <= end.getTime()) {
         const iso = toISO(cursor);
+
         if (!map[iso]) {
           map[iso] = [];
         }
+
         map[iso].push(task);
         cursor.setDate(cursor.getDate() + 1);
       }
@@ -107,10 +118,26 @@ const TaskCalendar = (function () {
   }
 
   function sortDayTasks(tasks) {
-    return tasks.slice().sort(function (a, b) {
+    return (tasks || []).slice().sort(function (a, b) {
+      const statusA = TaskStore.getStatus(a);
+      const statusB = TaskStore.getStatus(b);
+
+      if (statusA === "completed" && statusB !== "completed") {
+        return 1;
+      }
+
+      if (statusA !== "completed" && statusB === "completed") {
+        return -1;
+      }
+
       const timeA = String(a.time || "23:59");
       const timeB = String(b.time || "23:59");
-      return timeA.localeCompare(timeB);
+
+      if (timeA !== timeB) {
+        return timeA.localeCompare(timeB);
+      }
+
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });
   }
 
@@ -128,92 +155,111 @@ const TaskCalendar = (function () {
     }
   }
 
+  function buildDayButton(item, today, dayTasks) {
+    const hasOverdue = dayTasks.some(function (task) {
+      return TaskStore.getStatus(task) === "overdue";
+    });
+
+    let html = '<button type="button" class="calendar-day';
+
+    if (!item.inCurrentMonth) {
+      html += " outside-month";
+    }
+
+    if (item.iso === today) {
+      html += " today";
+    }
+
+    if (item.iso === state.selectedDate) {
+      html += " selected";
+    }
+
+    if (hasOverdue) {
+      html += " has-overdue";
+    }
+
+    html += '" data-date="' + item.iso + '">';
+
+    html += '<div class="calendar-day-top">';
+    html +=
+      '<span class="calendar-day-number">' + item.date.getDate() + "</span>";
+
+    if (dayTasks.length > 0) {
+      html +=
+        '<span class="calendar-day-count">' + dayTasks.length + "</span>";
+    } else {
+      html += '<span class="calendar-day-count calendar-empty">-</span>';
+    }
+
+    html += "</div>";
+    html += '<div class="calendar-day-items">';
+
+    if (dayTasks.length > 0) {
+      dayTasks.slice(0, 2).forEach(function (task) {
+        html += '<div class="calendar-task-line">';
+        html +=
+          '<span class="calendar-task-title">' +
+          escapeHtml(task.title) +
+          "</span>";
+        html += "</div>";
+      });
+
+      if (dayTasks.length > 2) {
+        html +=
+          '<div class="calendar-more">+' +
+          (dayTasks.length - 2) +
+          " mais</div>";
+      }
+    } else {
+      html += '<div class="calendar-empty">Sem tarefas</div>';
+    }
+
+    html += "</div>";
+    html += '<div class="calendar-dots">';
+
+    if (dayTasks.length > 0) {
+      dayTasks.slice(0, 5).forEach(function (task) {
+        let dotClass = "calendar-dot";
+        const status = TaskStore.getStatus(task);
+
+        if (status === "completed") {
+          dotClass += " completed";
+        } else if (status === "overdue") {
+          dotClass += " overdue";
+        }
+
+        html += '<span class="' + dotClass + '"></span>';
+      });
+    }
+
+    html += "</div>";
+    html += "</button>";
+
+    return html;
+  }
+
   function render(tasks) {
     if (!refs.calendarGrid || !refs.calendarTitle) {
       return;
     }
 
+    state.lastRenderedTasks = Array.isArray(tasks) ? tasks.slice() : [];
+
     const today = toISO(new Date());
-    const tasksByDate = getTasksByDate(tasks || []);
+    const tasksByDate = getTasksByDate(state.lastRenderedTasks);
     const days = buildCalendarDays(state.currentMonth, state.currentYear);
 
-    refs.calendarTitle.textContent = getMonthLabel(state.currentMonth, state.currentYear);
+    refs.calendarTitle.textContent = getMonthLabel(
+      state.currentMonth,
+      state.currentYear
+    );
 
     let html = "";
 
     days.forEach(function (item) {
       const rawDayTasks = tasksByDate[item.iso] || [];
       const dayTasks = sortDayTasks(rawDayTasks);
-      const hasOverdue = dayTasks.some(function (task) {
-        return TaskStore.getStatus(task) === "overdue";
-      });
-
-      html += '<button type="button" class="calendar-day';
-
-      if (!item.inCurrentMonth) {
-        html += ' outside-month';
-      }
-
-      if (item.iso === today) {
-        html += ' today';
-      }
-
-      if (item.iso === state.selectedDate) {
-        html += ' selected';
-      }
-
-      if (hasOverdue) {
-        html += ' has-overdue';
-      }
-
-      html += '" data-date="' + item.iso + '">';
-
-      html += '<div class="calendar-day-top">';
-      html += '<span class="calendar-day-number">' + item.date.getDate() + '</span>';
-
-      if (dayTasks.length > 0) {
-        html += '<span class="calendar-day-count">' + dayTasks.length + '</span>';
-      } else {
-        html += '<span class="calendar-day-count calendar-empty">-</span>';
-      }
-
-      html += '</div>';
-      html += '<div class="calendar-day-items">';
-
-      if (dayTasks.length > 0) {
-        dayTasks.slice(0, 2).forEach(function (task) {
-          html += '<div class="calendar-task-line">';
-          html += '<span class="calendar-task-title">' + escapeHtml(task.title) + '</span>';
-          html += '</div>';
-        });
-
-        if (dayTasks.length > 2) {
-          html += '<div class="calendar-more">+' + (dayTasks.length - 2) + ' mais</div>';
-        }
-      } else {
-        html += '<div class="calendar-empty">Sem tarefas</div>';
-      }
-
-      html += '</div>';
-      html += '<div class="calendar-dots">';
-
-      if (dayTasks.length > 0) {
-        dayTasks.slice(0, 5).forEach(function (task) {
-          let dotClass = 'calendar-dot';
-          const status = TaskStore.getStatus(task);
-
-          if (status === 'completed') {
-            dotClass += ' completed';
-          } else if (status === 'overdue') {
-            dotClass += ' overdue';
-          }
-
-          html += '<span class="' + dotClass + '"></span>';
-        });
-      }
-
-      html += '</div>';
-      html += '</button>';
+      html += buildDayButton(item, today, dayTasks);
     });
 
     refs.calendarGrid.innerHTML = html;
@@ -222,6 +268,12 @@ const TaskCalendar = (function () {
 
   function setSelectedDate(dateString) {
     state.selectedDate = dateString || "";
+
+    const parsed = parseISO(state.selectedDate);
+    if (parsed) {
+      state.currentMonth = parsed.getMonth();
+      state.currentYear = parsed.getFullYear();
+    }
   }
 
   function getSelectedDate() {
@@ -246,53 +298,66 @@ const TaskCalendar = (function () {
     }
   }
 
+  function rerenderLastState() {
+    render(state.lastRenderedTasks);
+  }
+
   function bindEvents(onDateSelect, onClear, onMonthChange) {
     state.onDateSelect = onDateSelect || null;
     state.onClear = onClear || null;
     state.onMonthChange = onMonthChange || null;
 
     if (refs.prevMonthBtn) {
-      refs.prevMonthBtn.addEventListener('click', function () {
+      refs.prevMonthBtn.addEventListener("click", function () {
         goToPreviousMonth();
-        if (typeof state.onMonthChange === 'function') {
+
+        if (typeof state.onMonthChange === "function") {
           state.onMonthChange();
+        } else {
+          rerenderLastState();
         }
       });
     }
 
     if (refs.nextMonthBtn) {
-      refs.nextMonthBtn.addEventListener('click', function () {
+      refs.nextMonthBtn.addEventListener("click", function () {
         goToNextMonth();
-        if (typeof state.onMonthChange === 'function') {
+
+        if (typeof state.onMonthChange === "function") {
           state.onMonthChange();
+        } else {
+          rerenderLastState();
         }
       });
     }
 
     if (refs.clearDateFilterBtn) {
-      refs.clearDateFilterBtn.addEventListener('click', function () {
-        state.selectedDate = '';
-        if (typeof state.onClear === 'function') {
+      refs.clearDateFilterBtn.addEventListener("click", function () {
+        state.selectedDate = "";
+
+        if (typeof state.onClear === "function") {
           state.onClear();
+        } else {
+          rerenderLastState();
         }
       });
     }
 
     if (refs.toggleCalendarBtn) {
-      refs.toggleCalendarBtn.addEventListener('click', function () {
+      refs.toggleCalendarBtn.addEventListener("click", function () {
         state.collapsed = !state.collapsed;
         updateCollapsedUI();
       });
     }
 
     if (refs.calendarGrid) {
-      refs.calendarGrid.addEventListener('click', function (event) {
-        const button = event.target.closest('.calendar-day');
+      refs.calendarGrid.addEventListener("click", function (event) {
+        const button = event.target.closest(".calendar-day");
         if (!button) {
           return;
         }
 
-        const date = button.dataset.date || '';
+        const date = button.dataset.date || "";
         state.selectedDate = date;
 
         const parsed = parseISO(date);
@@ -305,8 +370,10 @@ const TaskCalendar = (function () {
           state.collapsed = true;
         }
 
-        if (typeof state.onDateSelect === 'function') {
+        if (typeof state.onDateSelect === "function") {
           state.onDateSelect(date, true);
+        } else {
+          rerenderLastState();
         }
       });
     }
@@ -316,6 +383,7 @@ const TaskCalendar = (function () {
     render: render,
     bindEvents: bindEvents,
     setSelectedDate: setSelectedDate,
-    getSelectedDate: getSelectedDate
+    getSelectedDate: getSelectedDate,
+    rerenderLastState: rerenderLastState
   };
 })();

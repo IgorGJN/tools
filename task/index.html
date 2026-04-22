@@ -12,9 +12,9 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="./css/tasks.css"/>
-  <link rel="stylesheet" href="./css/popup.css">
-  <link rel="stylesheet" href="./css/load.css">
+  <link rel="stylesheet" href="./css/tasks.css" />
+  <link rel="stylesheet" href="./css/popup.css" />
+  <link rel="stylesheet" href="./css/load.css" />
 
   <link rel="manifest" href="./manifest.json" />
   <meta name="theme-color" content="#7c9cff" />
@@ -23,146 +23,103 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Tarefas" />
-
-
 </head>
 <body>
 
+  <!-- LOADER INICIAL -->
   <div id="appLoader" class="app-loader">
-  <div class="loader-content">
-    <div class="loader-orb"></div>
-    <p class="loader-text">Acessando agenda...</p>
+    <div class="loader-content">
+      <div class="loader-orb"></div>
+      <p class="loader-text">Acessando agenda...</p>
+    </div>
   </div>
-</div>
-  
+
+  <!-- APP -->
   <div class="app-shell app-shell-preload" id="appShell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">Ferramenta</p>
-        <h1>Lista de tarefas</h1>
-        <p class="subtitle">
-          Organize compromissos, acompanhe status e filtre por hashtag.
-        </p>
-        <div class="topbar-meta-row">
-          <p id="lastSyncInfo" class="last-sync-info">Última sincronização: nunca</p>
-          <div id="userSessionInfo" class="user-session-info hidden"></div>
-        </div>
+
+    <!-- TOPBAR -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button id="screenHomeBtn" class="topbar-home-btn" type="button">
+          <span class="topbar-home-title">Início</span>
+        </button>
       </div>
 
-      <div class="topbar-actions">
-        <button id="themeToggleBtn" class="btn btn-secondary" type="button">Tema</button>
-        <button id="enableNotificationsBtn" class="btn btn-secondary" type="button">Ativar notificações</button>
-        <button id="syncBtn" class="btn btn-secondary" type="button">Sincronizar</button>
-        <button id="logoutBtn" class="btn btn-secondary" type="button">Sair</button>
-        <button id="newTaskBtn" class="btn btn-primary" type="button">+ Nova tarefa</button>
+      <div class="topbar-center">
+        <p id="lastSyncInfo" class="last-sync-info">Última sincronização: nunca</p>
+        <div id="userSessionInfo" class="user-session-info hidden"></div>
+      </div>
+
+      <div class="topbar-right">
+        <button id="searchToggleBtn" class="icon-btn" type="button" aria-label="Buscar">
+          🔍
+        </button>
+        <button id="settingsBtn" class="icon-btn" type="button" aria-label="Configurações">
+          ⚙️
+        </button>
       </div>
     </header>
 
-    <section class="summary-grid" id="summaryGrid">
-      <article class="summary-card">
-        <span>Total</span>
-        <strong id="totalTasks">0</strong>
-      </article>
-
-      <article class="summary-card">
-        <span>Pendentes</span>
-        <strong id="pendingTasks">0</strong>
-      </article>
-
-      <article class="summary-card">
-        <span>Concluídas</span>
-        <strong id="completedTasks">0</strong>
-      </article>
-
-      <article class="summary-card danger">
-        <span>Atrasadas</span>
-        <strong id="overdueTasks">0</strong>
-      </article>
-    </section>
-
-    <section class="toolbar card">
-      <div class="toolbar-row toolbar-row-main">
-        <div class="field grow">
-          <label for="searchInput">Buscar</label>
+    <!-- BUSCA GLOBAL -->
+    <section id="searchPanel" class="search-panel hidden" aria-label="Busca global">
+      <div class="search-panel-row">
+        <div class="field grow no-margin">
+          <label for="searchInput">Buscar tarefas</label>
           <input
             type="text"
             id="searchInput"
-            placeholder="Buscar por título ou descrição"
+            placeholder="Buscar por título, descrição ou hashtag"
           />
         </div>
 
-        <div class="field small">
-          <label for="statusFilter">Status</label>
-          <select id="statusFilter">
-            <option value="all">Todas</option>
-            <option value="pending">Pendentes</option>
-            <option value="completed">Concluídas</option>
-            <option value="today">Hoje</option>
-            <option value="overdue">Atrasadas</option>
-          </select>
-        </div>
-
-        <div class="field small">
-          <label for="sortMode">Ordenação</label>
-          <select id="sortMode">
-            <option value="smart">Automática</option>
-            <option value="date-asc">Data crescente</option>
-            <option value="date-desc">Data decrescente</option>
-            <option value="created-desc">Mais recentes</option>
-          </select>
-        </div>
+        <button id="closeSearchBtn" class="icon-btn search-close-btn" type="button" aria-label="Fechar busca">
+          ✕
+        </button>
       </div>
+    </section>
 
-      <div class="toolbar-row toolbar-row-secondary">
-        <div class="field grow">
-          <label>Visibilidade</label>
-          <div id="visibilityFilter" class="segmented-control">
-            <button type="button" class="segment-btn active" data-visibility="mine">Minhas</button>
-            <button type="button" class="segment-btn" data-visibility="shared">Compartilhadas</button>
-            <button type="button" class="segment-btn" data-visibility="all">Tudo</button>
+    <main class="app-content">
+
+      <!-- HOME -->
+      <section id="screen-home" class="screen screen-active">
+        <section class="hero-card">
+          <div class="hero-copy">
+            <p class="eyebrow">Agenda pessoal</p>
+            <h1>Hoje</h1>
+            <p class="subtitle">
+              Veja primeiro o que importa agora, com foco no uso rápido no mobile.
+            </p>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div class="tag-filter-row">
-        <span>Hashtags:</span>
-        <div id="hashtagsPanel" class="hashtags-panel"></div>
-      </div>
-    </section>
+        <section class="summary-strip" id="summaryGrid">
+          <article class="summary-card compact">
+            <span>Total</span>
+            <strong id="totalTasks">0</strong>
+          </article>
 
-    <section class="card calendar-card">
-      <div class="calendar-header">
-        <div>
-          <p class="calendar-label">Agenda mensal</p>
-          <h2 id="calendarTitle">Calendário</h2>
-        </div>
+          <article class="summary-card compact">
+            <span>Pendentes</span>
+            <strong id="pendingTasks">0</strong>
+          </article>
 
-        <div class="calendar-actions">
-          <button id="toggleCalendarBtn" class="btn btn-secondary" type="button">Ocultar</button>
-          <button id="clearDateFilterBtn" class="btn btn-secondary" type="button">Mostrar tudo</button>
-          <button id="prevMonthBtn" class="btn btn-secondary" type="button">‹</button>
-          <button id="nextMonthBtn" class="btn btn-secondary" type="button">›</button>
-        </div>
-      </div>
+          <article class="summary-card compact">
+            <span>Concluídas</span>
+            <strong id="completedTasks">0</strong>
+          </article>
 
-      <div class="calendar-weekdays">
-        <div>Dom</div>
-        <div>Seg</div>
-        <div>Ter</div>
-        <div>Qua</div>
-        <div>Qui</div>
-        <div>Sex</div>
-        <div>Sáb</div>
-      </div>
+          <article class="summary-card compact danger">
+            <span>Atrasadas</span>
+            <strong id="overdueTasks">0</strong>
+          </article>
+        </section>
 
-      <div id="calendarGrid" class="calendar-grid"></div>
-    </section>
-
-    <section class="main-grid">
-      <div class="left-column">
-        <section class="card section-card">
+        <section class="screen-block card-like">
           <div class="section-header">
-            <h2>Tarefas</h2>
+            <div>
+              <h2>Tarefas do dia</h2>
+              <p class="section-subtitle">Ordenadas para leitura rápida.</p>
+            </div>
             <span id="taskCountLabel" class="section-count">0 itens</span>
           </div>
 
@@ -174,38 +131,200 @@
             <p>Crie uma nova tarefa ou ajuste os filtros para ver os resultados.</p>
           </div>
         </section>
-      </div>
 
-      <aside class="right-column">
-        <section class="card section-card sticky-box">
-          <div class="section-header">
-            <h2>Próximas</h2>
-          </div>
-          <div id="upcomingList" class="upcoming-list"></div>
+        <section class="screen-block card-like collapsible-block">
+          <button id="toggleOverdueBtn" class="collapse-trigger" type="button">
+            <span>Atrasadas</span>
+            <span id="overdueInlineCount" class="collapse-count">0</span>
+          </button>
+
+          <div id="overdueList" class="task-list hidden"></div>
         </section>
-      </aside>
-    </section>
+
+        <section class="screen-block card-like collapsible-block">
+          <button id="toggleUpcomingBtn" class="collapse-trigger" type="button">
+            <span>Próximas</span>
+            <span class="collapse-count">ver</span>
+          </button>
+
+          <div id="upcomingList" class="upcoming-list hidden"></div>
+        </section>
+      </section>
+
+      <!-- TODAS -->
+      <section id="screen-all" class="screen hidden">
+        <section class="screen-block card-like">
+          <div class="section-header">
+            <div>
+              <h2>Todas as atividades</h2>
+              <p class="section-subtitle">Filtre por visibilidade, status e hashtag.</p>
+            </div>
+          </div>
+
+          <div class="toolbar-inline">
+            <div class="field grow">
+              <label>Visibilidade</label>
+              <div id="visibilityFilter" class="segmented-control">
+                <button type="button" class="segment-btn active" data-visibility="mine">Minhas</button>
+                <button type="button" class="segment-btn" data-visibility="shared">Compartilhadas</button>
+                <button type="button" class="segment-btn" data-visibility="all">Todas</button>
+              </div>
+            </div>
+
+            <div class="field small">
+              <label for="statusFilter">Status</label>
+              <select id="statusFilter">
+                <option value="all">Todas</option>
+                <option value="pending">Pendentes</option>
+                <option value="completed">Concluídas</option>
+                <option value="today">Hoje</option>
+                <option value="overdue">Atrasadas</option>
+              </select>
+            </div>
+
+            <div class="field small">
+              <label for="sortMode">Ordenação</label>
+              <select id="sortMode">
+                <option value="smart">Automática</option>
+                <option value="date-asc">Data crescente</option>
+                <option value="date-desc">Data decrescente</option>
+                <option value="created-desc">Mais recentes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tag-filter-row">
+            <span>Hashtags:</span>
+            <div id="hashtagsPanel" class="hashtags-panel"></div>
+          </div>
+        </section>
+
+        <section class="screen-block card-like">
+          <div class="section-header">
+            <div>
+              <h2>Lista geral</h2>
+              <p class="section-subtitle">Agrupada por dia.</p>
+            </div>
+          </div>
+
+          <div id="allTasksGrouped" class="grouped-task-list"></div>
+        </section>
+      </section>
+
+      <!-- CALENDÁRIO -->
+      <section id="screen-calendar" class="screen hidden">
+        <section class="card-like calendar-card">
+          <div class="calendar-header">
+            <div>
+              <p class="calendar-label">Agenda mensal</p>
+              <h2 id="calendarTitle">Calendário</h2>
+            </div>
+
+            <div class="calendar-actions">
+              <button id="toggleCalendarBtn" class="btn btn-secondary" type="button">Ocultar</button>
+              <button id="clearDateFilterBtn" class="btn btn-secondary" type="button">Mostrar tudo</button>
+              <button id="prevMonthBtn" class="btn btn-secondary icon-only" type="button" aria-label="Mês anterior">‹</button>
+              <button id="nextMonthBtn" class="btn btn-secondary icon-only" type="button" aria-label="Próximo mês">›</button>
+            </div>
+          </div>
+
+          <div class="calendar-weekdays">
+            <div>Dom</div>
+            <div>Seg</div>
+            <div>Ter</div>
+            <div>Qua</div>
+            <div>Qui</div>
+            <div>Sex</div>
+            <div>Sáb</div>
+          </div>
+
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </section>
+
+        <section id="dayTasksPanel" class="screen-block card-like hidden">
+          <div class="section-header">
+            <div>
+              <h2>Atividades do dia</h2>
+              <p id="selectedDayLabel" class="section-subtitle">Selecione um dia no calendário.</p>
+            </div>
+          </div>
+
+          <div id="calendarDayTaskList" class="task-list"></div>
+        </section>
+      </section>
+
+      <!-- CONFIGURAÇÕES -->
+      <section id="screen-settings" class="screen hidden">
+        <section class="settings-grid">
+
+          <article class="settings-card">
+            <div class="settings-card-header">
+              <h2>Aparência</h2>
+              <p>Troca de tema e base pronta para novos temas.</p>
+            </div>
+
+            <div class="settings-actions">
+              <button id="themeToggleBtn" class="btn btn-secondary" type="button">Tema</button>
+            </div>
+          </article>
+
+          <article class="settings-card">
+            <div class="settings-card-header">
+              <h2>Notificações</h2>
+              <p>Permissão e lembretes locais.</p>
+            </div>
+
+            <div class="settings-actions">
+              <button id="enableNotificationsBtn" class="btn btn-secondary" type="button">Ativar notificações</button>
+            </div>
+          </article>
+
+          <article class="settings-card">
+            <div class="settings-card-header">
+              <h2>Sincronização</h2>
+              <p>Controle manual e sessão do aplicativo.</p>
+            </div>
+
+            <div class="settings-actions settings-actions-wrap">
+              <button id="syncBtn" class="btn btn-secondary" type="button">Sincronizar</button>
+              <button id="logoutBtn" class="btn btn-secondary" type="button">Sair</button>
+            </div>
+          </article>
+
+          <article class="settings-card wide">
+            <div class="settings-card-header">
+              <h2>Hashtags privadas</h2>
+              <p>Área pronta para a próxima melhoria.</p>
+            </div>
+
+            <div id="privateTagsList" class="private-tags-list">
+              <div class="tag-empty">A configuração detalhada entra no próximo ciclo.</div>
+            </div>
+          </article>
+
+        </section>
+      </section>
+
+    </main>
+
+    <div class="bottom-safe-space"></div>
   </div>
 
+  <!-- FABS -->
+  <div class="fab-stack" aria-label="Ações rápidas">
+    <button id="fabAll" class="fab fab-secondary" type="button" aria-label="Todas as atividades">≡</button>
+    <button id="fabCalendar" class="fab fab-secondary" type="button" aria-label="Calendário">📅</button>
+    <button id="newTaskBtn" class="fab fab-primary" type="button" aria-label="Nova tarefa">+</button>
+  </div>
+
+  <!-- MODAL TAREFA -->
   <div id="taskModal" class="modal hidden" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal></div>
 
-    <div
-      class="modal-dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modalTitle"
-    >
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-header">
         <h2 id="modalTitle">Nova tarefa</h2>
-        <button
-          class="icon-btn"
-          type="button"
-          data-close-modal
-          aria-label="Fechar"
-        >
-          ×
-        </button>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar">×</button>
       </div>
 
       <form id="taskForm" class="task-form">
@@ -226,29 +345,33 @@
           ></textarea>
         </div>
 
-        <div class="form-grid form-grid-period">
-          <div class="field">
-            <label for="taskDate">Início - data</label>
-            <input type="date" id="taskDate" required />
-          </div>
+        <div class="compact-period-row">
+  <div class="compact-period-label">Início</div>
 
-          <div class="field">
-            <label for="taskTime">Início - hora</label>
-            <input type="time" id="taskTime" />
-          </div>
-        </div>
+  <div class="field compact-field compact-date-field">
+    <label for="taskDate">Data</label>
+    <input type="date" id="taskDate" required />
+  </div>
 
-        <div class="form-grid form-grid-period">
-          <div class="field">
-            <label for="taskEndDate">Término - data</label>
-            <input type="date" id="taskEndDate" />
-          </div>
+  <div class="field compact-field compact-time-field">
+    <label for="taskTime">Hora</label>
+    <input type="time" id="taskTime" />
+  </div>
+</div>
 
-          <div class="field">
-            <label for="taskEndTime">Término - hora</label>
-            <input type="time" id="taskEndTime" />
-          </div>
-        </div>
+<div class="compact-period-row">
+  <div class="compact-period-label">Término</div>
+
+  <div class="field compact-field compact-date-field">
+    <label for="taskEndDate">Data</label>
+    <input type="date" id="taskEndDate" />
+  </div>
+
+  <div class="field compact-field compact-time-field">
+    <label for="taskEndTime">Hora</label>
+    <input type="time" id="taskEndTime" />
+  </div>
+</div>
 
         <div class="field field-inline-hint">
           <small>O término é opcional. Se informado, pode ser em outro dia.</small>
@@ -271,78 +394,54 @@
           </label>
         </div>
 
-        <div id="recurrenceFields" class="form-grid hidden">
-          <div class="field">
-            <label for="taskRecurrenceType">Frequência</label>
-            <select id="taskRecurrenceType">
-              <option value="daily">Diária</option>
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensal</option>
-              <option value="yearly">Anual</option>
-            </select>
-          </div>
+        <div id="recurrenceFields" class="recurrence-inline-grid hidden">
+  <div class="field">
+    <label for="taskRecurrenceType">Frequência</label>
+    <select id="taskRecurrenceType">
+      <option value="daily">Diária</option>
+      <option value="weekly">Semanal</option>
+      <option value="monthly">Mensal</option>
+      <option value="yearly">Anual</option>
+    </select>
+  </div>
 
-          <div class="field">
-            <label for="taskRecurrenceInterval">Intervalo</label>
-            <input
-              type="number"
-              id="taskRecurrenceInterval"
-              min="1"
-              step="1"
-              value="1"
-            />
-            <small>Ex.: 1 = toda semana, 2 = a cada 2 semanas</small>
-          </div>
-        </div>
+  <div class="field">
+    <label for="taskRecurrenceInterval">Intervalo</label>
+    <input type="number" id="taskRecurrenceInterval" min="1" step="1" value="1" />
+    <small>Ex.: 1 = toda semana, 2 = a cada 2 semanas</small>
+  </div>
+</div>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-close-modal>
-            Cancelar
-          </button>
-          <button type="submit" class="btn btn-primary">
-            Salvar tarefa
-          </button>
+          <button type="button" class="btn btn-secondary" data-close-modal>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar tarefa</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- MODAL CONFIRM -->
   <div id="confirmModal" class="modal hidden" aria-hidden="true">
     <div class="modal-backdrop" data-close-confirm></div>
 
-    <div
-      class="modal-dialog small-dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirmTitle"
-    >
+    <div class="modal-dialog small-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
       <div class="modal-header">
         <h2 id="confirmTitle">Excluir tarefa</h2>
-        <button
-          class="icon-btn"
-          type="button"
-          data-close-confirm
-          aria-label="Fechar"
-        >
-          ×
-        </button>
+        <button class="icon-btn" type="button" data-close-confirm aria-label="Fechar">×</button>
       </div>
 
       <div class="confirm-content">
         <p>Tem certeza que deseja excluir esta tarefa?</p>
 
         <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-close-confirm>
-            Cancelar
-          </button>
-          <button type="button" id="confirmDeleteBtn" class="btn btn-danger">
-            Excluir
-          </button>
+          <button type="button" class="btn btn-secondary" data-close-confirm>Cancelar</button>
+          <button type="button" id="confirmDeleteBtn" class="btn btn-danger">Excluir</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- MODAL AUTH -->
   <div id="authModal" class="modal auth-modal hidden" aria-hidden="true">
     <div class="modal-backdrop"></div>
 
@@ -381,6 +480,7 @@
     </div>
   </div>
 
+  <!-- LOADING OVERLAY -->
   <div id="loadingOverlay" class="loading-overlay hidden" aria-hidden="true">
     <div class="loading-box">
       <div class="loading-spinner"></div>
@@ -388,23 +488,23 @@
     </div>
   </div>
 
+  <!-- TOAST -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- POPUP -->
+  <div id="newsPopup" class="news-popup hidden">
+    <div class="news-overlay"></div>
 
-
-<div id="newsPopup" class="news-popup hidden">
-  <div class="news-overlay"></div>
-
-  <div class="news-frame-modal">
-    <button class="news-close" id="newsCloseBtn">×</button>
-    <iframe
-      id="newsPopupFrame"
-      src="./popup/novidades.html"
-      title="Popup personalizado"
-      loading="lazy"
-    ></iframe>
+    <div class="news-frame-modal">
+      <button class="news-close" id="newsCloseBtn">×</button>
+      <iframe
+        id="newsPopupFrame"
+        src="./popup/novidades.html"
+        title="Popup personalizado"
+        loading="lazy"
+      ></iframe>
+    </div>
   </div>
-</div>
 
   <script src="./js/tasks-data.js"></script>
   <script src="./js/tasks-ui.js"></script>
@@ -413,7 +513,6 @@
   <script src="./js/tasks-app.js"></script>
   <script src="./js/tasks-calendar.js"></script>
   <script src="./js/popup.js"></script>
-
 
   <script>
     if ("serviceWorker" in navigator) {
@@ -426,6 +525,5 @@
       });
     }
   </script>
-
 </body>
 </html>
