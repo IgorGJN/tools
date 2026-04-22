@@ -1,4 +1,4 @@
-const CACHE_NAME = "tasks-app-v1";
+const CACHE_NAME = "tasks-app-v1.5.0";
 
 const urlsToCache = [
   "./",
@@ -24,6 +24,8 @@ const urlsToCache = [
 
 // INSTALAÇÃO
 self.addEventListener("install", (event) => {
+  self.skipWaiting();
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(urlsToCache);
@@ -31,24 +33,26 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// ATIVAÇÃO (limpa cache antigo)
+// ATIVAÇÃO
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then((keys) => {
+        return Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) {
+              return caches.delete(key);
+            }
+          })
+        );
+      })
+    ])
   );
 });
 
-// FETCH (estratégia híbrida)
+// FETCH
 self.addEventListener("fetch", (event) => {
-  // NÃO intercepta chamadas do Apps Script
   if (event.request.url.includes("script.google.com")) {
     return;
   }
@@ -64,6 +68,28 @@ self.addEventListener("fetch", (event) => {
           });
         })
       );
+    })
+  );
+});
+
+// CLIQUE NA NOTIFICAÇÃO
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  event.waitUntil(
+    self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          return client.focus();
+        }
+      }
+
+      if (self.clients.openWindow) {
+        return self.clients.openWindow("./");
+      }
     })
   );
 });

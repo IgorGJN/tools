@@ -51,6 +51,7 @@
 
       <div class="topbar-actions">
         <button id="themeToggleBtn" class="btn btn-secondary" type="button">Tema</button>
+        <button id="enableNotificationsBtn" class="btn btn-secondary" type="button">Ativar notificações</button>
         <button id="syncBtn" class="btn btn-secondary" type="button">Sincronizar</button>
         <button id="logoutBtn" class="btn btn-secondary" type="button">Sair</button>
         <button id="newTaskBtn" class="btn btn-primary" type="button">+ Nova tarefa</button>
@@ -391,11 +392,24 @@
 
 
 
+<div id="newsPopup" class="news-popup hidden">
+  <div class="news-overlay"></div>
 
+  <div class="news-frame-modal">
+    <button class="news-close" id="newsCloseBtn">×</button>
+    <iframe
+      id="newsPopupFrame"
+      src="./popup/novidades.html"
+      title="Popup personalizado"
+      loading="lazy"
+    ></iframe>
+  </div>
+</div>
 
   <script src="./js/tasks-data.js"></script>
   <script src="./js/tasks-ui.js"></script>
   <script src="./js/tasks-sync.js"></script>
+  <script src="./js/task-notifications.js"></script>
   <script src="./js/tasks-app.js"></script>
   <script src="./js/tasks-calendar.js"></script>
   <script src="./js/popup.js"></script>

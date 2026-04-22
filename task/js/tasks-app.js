@@ -1,6 +1,8 @@
 const App = (function () {
   const AUTH_STORAGE_KEY = "tasks_tool_auth_v1";
   const VISIBILITY_STORAGE_KEY = "tasks_tool_visibility_v1";
+  const OFFLINE_SESSION_MAX_HOURS = 48;
+  const OFFLINE_SESSION_MAX_MS = OFFLINE_SESSION_MAX_HOURS * 60 * 60 * 1000;
 
   const state = {
     filters: {
@@ -58,6 +60,8 @@ const App = (function () {
     authError: document.getElementById("authError"),
     appLoader: document.getElementById("appLoader"),
     appShell: document.getElementById("appShell"),
+
+    enableNotificationsBtn: document.getElementById("enableNotificationsBtn"),
   };
 
   function getAuthStorage() {
@@ -74,6 +78,79 @@ const App = (function () {
 
   function clearAuthStorage() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+
+  function buildStoredAuth(auth, user) {
+    return {
+      username: String((auth && auth.username) || "").trim(),
+      password: String((auth && auth.password) || "").trim(),
+      user: user || null,
+      lastValidatedAt: new Date().toISOString()
+    };
+  }
+
+  function markAuthValidated(user) {
+    if (!state.auth) {
+      return;
+    }
+
+    const stored = buildStoredAuth(state.auth, user || state.user || null);
+    saveAuthStorage(stored);
+    state.auth = stored;
+  }
+
+  function isOfflineSessionStillValid(savedAuth) {
+    if (!savedAuth || !savedAuth.lastValidatedAt) {
+      return false;
+    }
+
+    const validatedAt = new Date(savedAuth.lastValidatedAt).getTime();
+    if (!validatedAt || Number.isNaN(validatedAt)) {
+      return false;
+    }
+
+    return Date.now() - validatedAt <= OFFLINE_SESSION_MAX_MS;
+  }
+
+  function canEnterOfflineMode(savedAuth) {
+    const localTasks = TaskStore.load();
+
+    return (
+      !!savedAuth &&
+      !!savedAuth.username &&
+      !!savedAuth.password &&
+      isOfflineSessionStillValid(savedAuth) &&
+      localTasks.length > 0
+    );
+  }
+
+  function enterOfflineMode(savedAuth) {
+    state.auth = savedAuth;
+    state.user = savedAuth.user || {
+      username: savedAuth.username,
+      name: savedAuth.username
+    };
+
+    closeAuthModal();
+    renderUserSessionInfo();
+    refresh();
+    updateLastSyncInfo();
+    revealAppShell();
+    hideAppLoader();
+
+    TaskUI.showToast("Modo offline ativo. Você pode usar o app por até 48 horas sem nova validação.");
+  }
+
+  function isNetworkError(error) {
+    const message = String((error && error.message) || "").toLowerCase();
+
+    return (
+      message.includes("failed to fetch") ||
+      message.includes("networkerror") ||
+      message.includes("load failed") ||
+      message.includes("internet disconnected") ||
+      message.includes("err_internet_disconnected")
+    );
   }
 
   function showLoading(text) {
@@ -96,28 +173,28 @@ const App = (function () {
   }
 
   function showAppLoader(text) {
-  if (!refs.appLoader) return;
+    if (!refs.appLoader) return;
 
-  const textEl = refs.appLoader.querySelector(".loader-text");
-  if (textEl && text) {
-    textEl.textContent = text;
+    const textEl = refs.appLoader.querySelector(".loader-text");
+    if (textEl && text) {
+      textEl.textContent = text;
+    }
+
+    refs.appLoader.classList.remove("hidden");
   }
 
-  refs.appLoader.classList.remove("hidden");
-}
+  function hideAppLoader() {
+    if (!refs.appLoader) return;
 
-function hideAppLoader() {
-  if (!refs.appLoader) return;
+    refs.appLoader.classList.add("hidden");
+  }
 
-  refs.appLoader.classList.add("hidden");
-}
+  function revealAppShell() {
+    if (!refs.appShell) return;
 
-function revealAppShell() {
-  if (!refs.appShell) return;
-
-  refs.appShell.classList.remove("app-shell-preload");
-  refs.appShell.classList.add("app-shell-ready");
-}
+    refs.appShell.classList.remove("app-shell-preload");
+    refs.appShell.classList.add("app-shell-ready");
+  }
 
   function openAuthLoading(text) {
     refs.authModal.classList.remove("hidden");
@@ -130,22 +207,22 @@ function revealAppShell() {
   }
 
   function openAuthForm(errorText) {
-  refs.authModal.classList.remove("hidden");
-  refs.authModal.setAttribute("aria-hidden", "false");
-  refs.authLoadingState.classList.add("hidden");
-  refs.authForm.classList.remove("hidden");
+    refs.authModal.classList.remove("hidden");
+    refs.authModal.setAttribute("aria-hidden", "false");
+    refs.authLoadingState.classList.add("hidden");
+    refs.authForm.classList.remove("hidden");
 
-  revealAppShell();
-  hideAppLoader();
+    revealAppShell();
+    hideAppLoader();
 
-  if (errorText) {
-    refs.authError.textContent = errorText;
-    refs.authError.classList.remove("hidden");
-  } else {
-    refs.authError.textContent = "";
-    refs.authError.classList.add("hidden");
+    if (errorText) {
+      refs.authError.textContent = errorText;
+      refs.authError.classList.remove("hidden");
+    } else {
+      refs.authError.textContent = "";
+      refs.authError.classList.add("hidden");
+    }
   }
-}
 
   function closeAuthModal() {
     refs.authModal.classList.add("hidden");
@@ -228,6 +305,24 @@ function revealAppShell() {
     const username = state.user ? state.user.username : "";
     return TaskStore.getVisibleTasksForUser(tasks, username, state.filters.visibility);
   }
+
+  function getReminderTasks() {
+  return getAccessibleTasks().filter(function (task) {
+    return !task.deleted && !task.completed;
+  });
+}
+
+async function processReminders() {
+  if (!window.TaskNotifications) {
+    return;
+  }
+
+  try {
+    await TaskNotifications.processTasks(getReminderTasks());
+  } catch (error) {
+    console.error("Erro ao processar lembretes:", error);
+  }
+}
 
   function getCalendarTasks() {
     const accessible = getAccessibleTasks();
@@ -379,6 +474,7 @@ function revealAppShell() {
 
     closeModal();
     refresh();
+    processReminders();
   }
 
   function handleTaskListClick(event) {
@@ -430,6 +526,7 @@ function revealAppShell() {
       }
       TaskUI.showToast("Status da tarefa atualizado.");
       refresh();
+      processReminders();
     }
   }
 
@@ -502,6 +599,8 @@ function revealAppShell() {
         renderUserSessionInfo();
       }
 
+      markAuthValidated(result.user || state.user);
+
       TaskStore.setTasks(result.tasks);
       TaskStore.saveLastSync(new Date().toISOString());
 
@@ -509,15 +608,24 @@ function revealAppShell() {
       updateLastSyncInfo();
       showSyncSuccess();
 
+      await processReminders();
+
       if (showSuccessToast !== false) {
         TaskUI.showToast("Sincronização concluída.");
       }
     } catch (error) {
       console.error("Erro no syncNow:", error);
+
+      if (isNetworkError(error) || !navigator.onLine) {
+        TaskUI.showToast("Sem internet. Suas alterações continuam salvas no dispositivo e serão sincronizadas depois.");
+        return;
+      }
+
       if (/sessão|login|acesso|senha|usuário/i.test(String(error.message || ""))) {
         forceLogout(error.message || "Sessão inválida. Faça login novamente.");
         return;
       }
+
       TaskUI.showToast("Erro ao sincronizar: " + error.message);
     } finally {
       hideLoading();
@@ -537,18 +645,35 @@ function revealAppShell() {
         renderUserSessionInfo();
       }
 
+      markAuthValidated(result.user || state.user);
+
       TaskStore.setTasks(result.tasks);
       TaskStore.saveLastSync(new Date().toISOString());
       refresh();
       updateLastSyncInfo();
+
+      await processReminders();
+
     } catch (error) {
       console.error("Erro no initialSync:", error);
+
+      if (isNetworkError(error) || !navigator.onLine) {
+        refresh();
+        updateLastSyncInfo();
+        TaskUI.showToast("Sem internet. Exibindo os dados salvos neste dispositivo.");
+        return;
+      }
+
       if (/sessão|login|acesso|senha|usuário/i.test(String(error.message || ""))) {
         forceLogout(error.message || "Sessão inválida. Faça login novamente.");
         return;
       }
+
       refresh();
       updateLastSyncInfo();
+
+      await processReminders();
+
       TaskUI.showToast("Erro ao carregar tarefas: " + error.message);
     } finally {
       hideLoading();
@@ -563,6 +688,30 @@ function revealAppShell() {
     refs.syncBtn.addEventListener("click", function () {
       syncNow(true);
     });
+
+    if (refs.enableNotificationsBtn) {
+  refs.enableNotificationsBtn.addEventListener("click", async function () {
+    if (!window.TaskNotifications) {
+      TaskUI.showToast("Módulo de notificações não carregado.");
+      return;
+    }
+
+    const permission = await TaskNotifications.requestPermission();
+
+    if (permission === "granted") {
+      await TaskNotifications.showTestNotification();
+      TaskUI.showToast("Notificações ativadas com sucesso.");
+      return;
+    }
+
+    if (permission === "denied") {
+      TaskUI.showToast("Permissão de notificações negada.");
+      return;
+    }
+
+    TaskUI.showToast("Notificações não suportadas.");
+  });
+}
 
     refs.logoutBtn.addEventListener("click", function () {
       forceLogout();
@@ -649,93 +798,117 @@ function revealAppShell() {
     }
 
     try {
-  openAuthLoading("Entrando...");
-  const response = await TaskSync.login(username, password);
+      openAuthLoading("Entrando...");
+      const response = await TaskSync.login(username, password);
 
-  state.auth = { username: username, password: password };
-  state.user = response.user || null;
+      state.auth = buildStoredAuth(
+        { username: username, password: password },
+        response.user || null
+      );
+      state.user = response.user || null;
 
-  saveAuthStorage(state.auth);
+      saveAuthStorage(state.auth);
 
-  closeAuthModal();
-  renderUserSessionInfo();
+      closeAuthModal();
+      renderUserSessionInfo();
 
-  await initialSync();
+      await initialSync();
 
-  // libera o app com animação
-  revealAppShell();
-  hideAppLoader();
+      revealAppShell();
+      hideAppLoader();
 
-  if (window.PopupNews && typeof PopupNews.init === "function") {
-    PopupNews.init();
-  }
+      if (window.PopupNews && typeof PopupNews.init === "function") {
+        PopupNews.init();
+      }
+    } catch (error) {
+      console.error("Erro no login:", error);
 
-} catch (error) {
-  console.error("Erro no login:", error);
+      revealAppShell();
+      hideAppLoader();
 
-  // mostra o formulário e tira o loader inicial
-  revealAppShell();
-  hideAppLoader();
-
-  openAuthForm(error.message || "Falha ao entrar.");
-}
+      openAuthForm(error.message || "Falha ao entrar.");
+    }
   }
 
   async function bootstrapAuth() {
-  const savedAuth = getAuthStorage();
+    const savedAuth = getAuthStorage();
 
-  if (!savedAuth || !savedAuth.username || !savedAuth.password) {
-    openAuthForm();
-    return;
+    if (!savedAuth || !savedAuth.username || !savedAuth.password) {
+      openAuthForm();
+      return;
+    }
+
+    if (!navigator.onLine && canEnterOfflineMode(savedAuth)) {
+      enterOfflineMode(savedAuth);
+      return;
+    }
+
+    if (!navigator.onLine) {
+      openAuthForm("Sem internet. Entre online pelo menos uma vez a cada 48 horas para continuar usando offline.");
+      return;
+    }
+
+    try {
+      openAuthLoading("Validando sessão salva...");
+      const response = await TaskSync.validateSession(savedAuth);
+
+      state.auth = buildStoredAuth(savedAuth, response.user || savedAuth.user || null);
+      state.user = response.user || savedAuth.user || null;
+
+      saveAuthStorage(state.auth);
+
+      closeAuthModal();
+      renderUserSessionInfo();
+
+      await initialSync();
+
+      revealAppShell();
+      hideAppLoader();
+
+      if (typeof PopupNews !== "undefined" && typeof PopupNews.init === "function") {
+        setTimeout(function () {
+          PopupNews.init();
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Erro ao validar sessão:", error);
+
+      if ((isNetworkError(error) || !navigator.onLine) && canEnterOfflineMode(savedAuth)) {
+        enterOfflineMode(savedAuth);
+        return;
+      }
+
+      if (/sessão|login|acesso|senha|usuário/i.test(String(error.message || ""))) {
+        clearAuthStorage();
+        state.auth = null;
+        state.user = null;
+
+        renderUserSessionInfo();
+        openAuthForm(error.message || "Sua sessão expirou. Entre novamente.");
+        return;
+      }
+
+      openAuthForm("Não foi possível validar a sessão agora. Tente novamente com internet.");
+    }
   }
 
-  try {
-    openAuthLoading("Validando sessão salva...");
-    const response = await TaskSync.validateSession(savedAuth);
-
-    state.auth = savedAuth;
-    state.user = response.user || null;
-
-    closeAuthModal();
-    renderUserSessionInfo();
-
-    await initialSync();
-
-    revealAppShell();
-    hideAppLoader();
-
-    if (typeof PopupNews !== "undefined" && typeof PopupNews.init === "function") {
-  setTimeout(function () {
-    PopupNews.init();
-  }, 100);
-}
-
-  } catch (error) {
-    console.error("Erro ao validar sessão:", error);
-
+  function forceLogout(message) {
     clearAuthStorage();
     state.auth = null;
     state.user = null;
-
     renderUserSessionInfo();
-    openAuthForm(error.message || "Sua sessão expirou. Entre novamente.");
+    refresh();
+    openAuthForm(message || "");
   }
-}
-
-  function forceLogout(message) {
-  clearAuthStorage();
-  state.auth = null;
-  state.user = null;
-  TaskStore.setTasks([]);
-  renderUserSessionInfo();
-  refresh();
-  openAuthForm(message || "");
-}
 
   async function init() {
     applySavedTheme();
     showAppLoader("Acessando agenda...");
     hideLoading();
+    
+    if (window.TaskNotifications) {
+  await TaskNotifications.registerServiceWorker();
+}
     bindEvents();
     refresh();
     updateLastSyncInfo();
@@ -746,6 +919,12 @@ function revealAppShell() {
         syncNow(false);
       }
     }, 1000 * 60 * 5);
+    
+    setInterval(function () {
+  if (state.auth && Notification.permission === "granted") {
+    processReminders();
+  }
+}, 1000 * 60);
   }
 
   return {
