@@ -97,7 +97,7 @@ window.TaskNotifications = (function () {
 
     await registration.showNotification(title, {
       icon: "./icons/icon-192.png",
-      badge: "./icons/icon-192.png",
+      badge: "./icons/badge.png",
       tag: "task-reminder",
       renotify: false,
       ...options

@@ -246,7 +246,7 @@ textarea {
 }
 
 .app-content {
-  padding-top: calc(var(--topbar-height) + 18px);
+  padding-top: calc(var(--topbar-height) - 50px);
 }
 
 .bottom-safe-space {
@@ -394,8 +394,8 @@ textarea {
 }
 
 .hero-card {
-  padding: 18px;
-  margin-bottom: 16px;
+  padding: 8px 16px;
+  margin-bottom: 6px;
 }
 
 .hero-copy h1 {
@@ -430,6 +430,7 @@ textarea {
 .section-header h2 {
   margin: 0;
   font-size: 18px;
+  padding: 5px;
 }
 
 .section-subtitle {
@@ -1514,7 +1515,7 @@ textarea {
 
 @media (max-width: 540px) {
   .app-content {
-    padding-top: calc(var(--topbar-height) + 14px);
+    padding-top: calc(var(--topbar-height) - 65px);
   }
 
   .hero-copy h1 {
@@ -1564,5 +1565,418 @@ textarea {
   .recurrence-inline-grid .field select {
     padding: 9px 8px;
     font-size: 14px;
+  }
+}
+
+/* =========================
+   COMPACTAÇÃO MOBILE
+========================= */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .app-shell {
+    margin: 8px auto;
+    padding: 0 10px;
+  }
+
+  .topbar {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .topbar h1 {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    margin-top: 4px;
+    margin-bottom: 0;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .topbar-meta-row {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .last-sync-info,
+  .user-session-info {
+    margin-top: 0;
+    font-size: 12px;
+  }
+
+  .user-session-info {
+    padding: 6px 10px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .topbar-actions .btn {
+    flex: 1 1 calc(50% - 8px);
+    min-height: 40px;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .summary-card {
+    padding: 10px 12px;
+    border-radius: 14px;
+    min-height: unset;
+  }
+
+  .summary-card span {
+    font-size: 12px;
+  }
+
+  .summary-card strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 20px;
+    line-height: 1.1;
+  }
+
+  .toolbar,
+  .section-card,
+  .calendar-card {
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+  }
+
+  .calendar-card {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .calendar-header {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .calendar-label {
+    margin-bottom: 2px;
+    font-size: 10px;
+  }
+
+  .calendar-header h2,
+  #calendarTitle {
+    font-size: 18px;
+    line-height: 1.1;
+  }
+
+  .calendar-actions {
+    gap: 6px;
+  }
+
+  .calendar-actions .btn {
+    padding: 8px 10px;
+    min-height: 36px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+
+  .calendar-weekdays {
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+
+  .calendar-weekdays div {
+    font-size: 10px;
+    padding: 2px 0;
+  }
+
+  .calendar-grid {
+    gap: 3px;
+  }
+
+  .calendar-day {
+    min-height: 52px;
+    padding: 5px;
+    border-radius: 8px;
+  }
+
+  .calendar-day-number {
+    font-size: 12px;
+  }
+
+  .calendar-day-count {
+    font-size: 9px;
+  }
+
+  .calendar-dots {
+    gap: 3px;
+    margin-top: 4px;
+  }
+
+  .calendar-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .section-header {
+    margin-bottom: 8px;
+  }
+
+  .section-header h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  .task-list {
+    gap: 10px;
+  }
+
+  .task-card {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .task-title {
+    font-size: 15px;
+    line-height: 1.25;
+  }
+
+  .task-description {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .task-meta {
+    margin-top: 6px;
+    gap: 6px;
+  }
+
+  .meta-pill,
+  .status-badge,
+  .owner-pill {
+    min-height: 26px;
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+
+  .task-tags {
+    margin-top: 6px;
+    gap: 5px;
+  }
+
+  .tag-chip {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-card {
+    padding: 8px 10px;
+  }
+
+  .summary-card strong {
+    font-size: 18px;
+  }
+}
+
+/* =========================
+   MOBILE SUPER COMPACTO
+========================= */
+@media (max-width: 768px) {
+  .calendar-card {
+    padding: 10px 10px 8px;
+    margin-bottom: 8px;
+    border-radius: 14px;
+  }
+
+  .calendar-header {
+    margin-bottom: 0;
+    gap: 4px;
+  }
+
+  .calendar-header > div:first-child {
+    width: 100%;
+  }
+
+  .calendar-label {
+    margin: 0 0 2px;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .calendar-header h2,
+  #calendarTitle {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.05;
+  }
+
+  /* esconde a frase abaixo de Hoje */
+  .calendar-card .subtitle,
+  .calendar-card p:not(.calendar-label) {
+    display: none !important;
+  }
+
+  /* se os botões do calendário estiverem ocupando espaço demais */
+  .calendar-actions {
+    margin-top: 6px;
+    gap: 4px;
+  }
+
+  .calendar-actions .btn {
+    min-height: 30px;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .summary-card {
+    min-width: 0;
+    padding: 6px 4px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: none;
+  }
+
+  .summary-card span {
+    display: block;
+    font-size: 10px;
+    line-height: 1;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .summary-card strong {
+    display: block;
+    font-size: 16px;
+    line-height: 1;
+    margin: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .summary-card {
+    padding: 5px 2px;
+    border-radius: 8px;
+  }
+
+  .summary-card span {
+    font-size: 9px;
+    margin-bottom: 2px;
+  }
+
+  .summary-card strong {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    margin-bottom: 8px !important;
+  }
+
+  article.summary-card,
+  article.summary-card.compact {
+    padding: 2px 2px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  article.summary-card span,
+  article.summary-card.compact span {
+    display: block !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    margin: 0 0 2px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  article.summary-card strong,
+  article.summary-card.compact strong {
+    display: block !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  section#summaryGrid,
+  #summaryGrid.summary-strip,
+  .summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    margin: 0 !important;
+    margin-bottom: 4px !important;
+    padding: 0 !important;
+  }
+
+  #summaryGrid > .summary-card,
+  .summary-grid > .summary-card,
+  article.summary-card,
+  article.summary-card.compact {
+    padding: 3px 2px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+  }
+
+  article.summary-card span,
+  article.summary-card.compact span {
+    display: block !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    margin: 0 0 2px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  article.summary-card strong,
+  article.summary-card.compact strong {
+    display: block !important;
+    font-size: 13px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
   }
 }
