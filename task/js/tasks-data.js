@@ -3,6 +3,7 @@ const TaskStore = (function () {
   const LEGACY_STORAGE_KEY = "tasks_tool_items_v1";
   const LAST_SYNC_KEY = "tasks_tool_last_sync_v1";
   const PRIVATE_TAG = "privado";
+  const PRIVATE_TAGS = ["privado", "🐝", "pastoreio"];
   const PRIVATE_TAGS_STORAGE_KEY = "tasks_private_tags_v1";
 
   function clone(value) {
@@ -673,7 +674,7 @@ function togglePrivateTag(tag) {
     return false;
   }
 
-  const privateTags = getPrivateTags();
+  const privateTags = PRIVATE_TAGS;
 
   return task.hashtags.some(function (tag) {
     return privateTags.includes(tag);
