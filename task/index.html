@@ -42,9 +42,9 @@
     <!-- TOPBAR -->
     <header class="app-topbar">
       <div class="topbar-left">
-        <button id="screenHomeBtn" class="topbar-home-btn" type="button">
-          <span class="topbar-home-title">Início</span>
-        </button>
+        <button id="screenHomeBtn" class="topbar-home-btn icon-home-btn">
+  <img src="./icons/icon-192.png" alt="Início" />
+</button>
       </div>
 
       <div class="topbar-center">
@@ -146,7 +146,7 @@
 
         <section class="screen-block card-like collapsible-block">
           <button id="toggleUpcomingBtn" class="collapse-trigger" type="button">
-            <span>Próximas</span>
+            <span>Próximos 7 dias</span>
             <span class="collapse-count">ver</span>
           </button>
 
@@ -178,14 +178,14 @@
               <label for="statusFilter">Status</label>
               <select id="statusFilter">
                 <option value="all">Todas</option>
-                <option value="pending">Pendentes</option>
+                <option value="pending" selected>Pendentes</option>
                 <option value="completed">Concluídas</option>
                 <option value="today">Hoje</option>
                 <option value="overdue">Atrasadas</option>
               </select>
             </div>
 
-            <div class="field small">
+            <!-- <div class="field small">
               <label for="sortMode">Ordenação</label>
               <select id="sortMode">
                 <option value="smart">Automática</option>
@@ -194,7 +194,7 @@
                 <option value="created-desc">Mais recentes</option>
               </select>
             </div>
-          </div>
+          </div> -->
 
           <div class="tag-filter-row">
             <span>Hashtags:</span>
@@ -294,15 +294,13 @@
             </div>
           </article>
 
-          <article class="settings-card wide">
+          <article id="privateTagsCard" class="settings-card wide">
             <div class="settings-card-header">
               <h2>Hashtags privadas</h2>
-              <p>Área pronta para a próxima melhoria.</p>
+              <p>Selecione quais hashtags serão privadas.</p>
             </div>
 
-            <div id="privateTagsList" class="private-tags-list">
-              <div class="tag-empty">A configuração detalhada entra no próximo ciclo.</div>
-            </div>
+            <div id="privateTagsPanel" class="private-tags-panel"></div>
           </article>
 
         </section>

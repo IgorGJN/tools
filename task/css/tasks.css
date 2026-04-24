@@ -1980,3 +1980,53 @@ textarea {
     margin: 0 !important;
   }
 }
+
+.completed-compact-card {
+  opacity: 0.68;
+  border-left: 4px solid var(--success);
+  background: var(--success-soft);
+}
+
+.completed-compact-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.completed-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--success);
+  color: var(--text-inverse);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.completed-title {
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+
+
+
+.icon-home-btn {
+  padding: 4px;
+}
+
+.icon-home-btn img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.icon-home-btn {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}

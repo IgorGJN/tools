@@ -3,6 +3,7 @@ const TaskStore = (function () {
   const LEGACY_STORAGE_KEY = "tasks_tool_items_v1";
   const LAST_SYNC_KEY = "tasks_tool_last_sync_v1";
   const PRIVATE_TAG = "privado";
+  const PRIVATE_TAGS_STORAGE_KEY = "tasks_private_tags_v1";
 
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -63,6 +64,50 @@ const TaskStore = (function () {
 
     return Array.from(new Set(parts));
   }
+
+  function getPrivateTags() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PRIVATE_TAGS_STORAGE_KEY) || "[]");
+    const tags = normalizeHashtags(saved);
+
+    if (!tags.includes(PRIVATE_TAG)) {
+      tags.push(PRIVATE_TAG);
+    }
+
+    return tags;
+  } catch (error) {
+    return [PRIVATE_TAG];
+  }
+}
+
+function savePrivateTags(tags) {
+  const normalized = normalizeHashtags(tags);
+
+  if (!normalized.includes(PRIVATE_TAG)) {
+    normalized.push(PRIVATE_TAG);
+  }
+
+  localStorage.setItem(PRIVATE_TAGS_STORAGE_KEY, JSON.stringify(normalized));
+  return normalized;
+}
+
+function togglePrivateTag(tag) {
+  const normalizedTag = normalizeHashtags([tag])[0];
+
+  if (!normalizedTag || normalizedTag === PRIVATE_TAG) {
+    return getPrivateTags();
+  }
+
+  const current = getPrivateTags();
+
+  const next = current.includes(normalizedTag)
+    ? current.filter(function (item) {
+        return item !== normalizedTag;
+      })
+    : current.concat(normalizedTag);
+
+  return savePrivateTags(next);
+}
 
   function todayISO() {
     const now = new Date();
@@ -624,8 +669,16 @@ const TaskStore = (function () {
   }
 
   function hasPrivateTag(task) {
-    return Array.isArray(task.hashtags) && task.hashtags.includes(PRIVATE_TAG);
+  if (!Array.isArray(task.hashtags)) {
+    return false;
   }
+
+  const privateTags = getPrivateTags();
+
+  return task.hashtags.some(function (tag) {
+    return privateTags.includes(tag);
+  });
+}
 
   function isTaskVisibleForUser(task, username, visibility) {
     const user = String(username || "").trim().toLowerCase();
@@ -642,8 +695,8 @@ const TaskStore = (function () {
     }
 
     if (visibility === "shared") {
-      return !isMine && !isPrivate;
-    }
+  return !isMine && !isPrivate && !task.completed;
+}
 
     return isMine || (!isMine && !isPrivate);
   }
@@ -735,15 +788,32 @@ const TaskStore = (function () {
       });
   }
 
-  function getUpcoming(tasks, limit) {
-    const max = typeof limit === "number" ? limit : 5;
+  function getUpcoming(tasks) {
+  const today = todayISO();
+  const startDate = addDays(today, 1); // amanhã
+  const finalDate = addDays(today, 7); // amanhã + mais 6 dias
 
-    return smartSort(tasks)
-      .filter(function (task) {
-        return !task.completed && !task.deleted;
-      })
-      .slice(0, max);
-  }
+  return tasks
+    .filter(function (task) {
+      if (task.deleted || task.completed || !task.date) {
+        return false;
+      }
+
+      const taskStart = task.date;
+      const taskEnd = task.endDate || task.date;
+
+      return taskStart <= finalDate && taskEnd >= startDate;
+    })
+    .sort(function (a, b) {
+      const dateDiff = getStartDateTimeValue(a) - getStartDateTimeValue(b);
+
+      if (dateDiff !== 0) {
+        return dateDiff;
+      }
+
+      return String(a.title || "").localeCompare(String(b.title || ""));
+    });
+}
 
   function setTasks(tasks, options) {
     save(tasks.map(normalizeTask), {
@@ -782,6 +852,9 @@ const TaskStore = (function () {
     hasPrivateTag: hasPrivateTag,
     normalizeTask: normalizeTask,
     clone: clone,
+    getPrivateTags: getPrivateTags,
+    savePrivateTags: savePrivateTags,
+    togglePrivateTag: togglePrivateTag,
     PRIVATE_TAG: PRIVATE_TAG
   };
 })();

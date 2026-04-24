@@ -9,7 +9,7 @@ const App = (function () {
   const state = {
     filters: {
       search: "",
-      status: "all",
+      status: "pending",
       sort: "smart",
       tag: "",
       date: "",
@@ -93,7 +93,11 @@ const App = (function () {
     syncBtn: document.getElementById("syncBtn"),
     logoutBtn: document.getElementById("logoutBtn"),
     enableNotificationsBtn: document.getElementById("enableNotificationsBtn"),
-    themeToggleBtn: document.getElementById("themeToggleBtn")
+    themeToggleBtn: document.getElementById("themeToggleBtn"),
+
+    settingsBtn: document.getElementById("settingsBtn"),
+    settingsPanel: document.getElementById("screen-settings"),
+    privateTagsPanel: document.getElementById("privateTagsPanel"),
   };
 
   function getAuthStorage() {
@@ -580,7 +584,14 @@ const App = (function () {
     TaskUI.renderTasks(todayTasks, state.user ? state.user.username : "");
     TaskUI.renderOverdue(overdueTasks, state.user ? state.user.username : "");
     TaskUI.renderUpcoming(upcomingTasks);
-    TaskUI.renderGroupedTasks(allTasks, state.user ? state.user.username : "");
+
+    if (state.filters.status === "completed") {
+  TaskUI.renderCompactTasks(allTasks);
+} else {
+  TaskUI.renderGroupedTasks(allTasks, state.user ? state.user.username : "");
+}
+
+    TaskUI.renderPrivateTags(TaskStore.allHashtags(accessibleTasks),TaskStore.getPrivateTags());
 
     TaskCalendar.setSelectedDate(state.selectedCalendarDate || "");
     TaskCalendar.render(calendarTasks);
@@ -827,10 +838,15 @@ const App = (function () {
     }
 
     if (refs.settingsBtn) {
-      refs.settingsBtn.addEventListener("click", function () {
-        showScreen("settings");
-      });
+  refs.settingsBtn.addEventListener("click", function () {
+    if (state.activeScreen === "settings") {
+      showScreen("home");
+      return;
     }
+
+    showScreen("settings");
+  });
+}
 
     if (refs.fabAll) {
       refs.fabAll.addEventListener("click", function () {
@@ -1291,7 +1307,22 @@ function toggleTheme() {
         refresh();
         scheduleBackgroundSync();
       });
+
+
     }
+
+    if (refs.privateTagsPanel) {
+  refs.privateTagsPanel.addEventListener("click", function (event) {
+    const button = event.target.closest("[data-private-tag]");
+
+    if (!button) {
+      return;
+    }
+
+    TaskStore.togglePrivateTag(button.dataset.privateTag);
+    refresh();
+  });
+}
 
     document.addEventListener("click", handleGlobalClick);
     document.addEventListener("change", handleGlobalChange);

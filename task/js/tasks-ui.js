@@ -18,7 +18,8 @@ const TaskUI = (function () {
 
     overdueInlineCount: document.getElementById("overdueInlineCount"),
     selectedDayLabel: document.getElementById("selectedDayLabel"),
-    dayTasksPanel: document.getElementById("dayTasksPanel")
+    dayTasksPanel: document.getElementById("dayTasksPanel"),
+    privateTagsPanel: document.getElementById("privateTagsPanel"),
   };
 
   function escapeHtml(text) {
@@ -300,6 +301,25 @@ const TaskUI = (function () {
     elements.hashtagsPanel.innerHTML = html;
   }
 
+  function buildCompletedCompactCard(task) {
+  let html = "";
+
+  html += '<article class="upcoming-card completed-compact-card">';
+  html += '<div class="completed-compact-top">';
+  html += '<span class="completed-check">✓</span>';
+  html += '<div>';
+  html += '<h3 class="upcoming-title completed-title">' + escapeHtml(task.title) + "</h3>";
+  html +=
+    '<div class="upcoming-date">' +
+    escapeHtml(formatDateRange(task)) +
+    "</div>";
+  html += "</div>";
+  html += "</div>";
+  html += "</article>";
+
+  return html;
+}
+
   function buildTaskCard(task, currentUsername) {
     const status = TaskStore.getStatus(task);
     const meta = statusMeta(status);
@@ -421,9 +441,12 @@ const TaskUI = (function () {
 
     let html = "";
     tasks.forEach(function (task) {
-      html += buildTaskCard(task, currentUsername);
-    });
-
+  if (task.completed) {
+    html += buildCompletedCompactCard(task);
+  } else {
+    html += buildTaskCard(task, currentUsername);
+  }
+});
     container.innerHTML = html;
   }
 
@@ -523,8 +546,12 @@ const TaskUI = (function () {
       html += '<div class="task-list">';
 
       groups[key].forEach(function (task) {
-        html += buildTaskCard(task, currentUsername);
-      });
+  if (task.completed) {
+    html += buildCompletedCompactCard(task);
+  } else {
+    html += buildTaskCard(task, currentUsername);
+  }
+});
 
       html += "</div>";
       html += "</section>";
@@ -571,6 +598,38 @@ const TaskUI = (function () {
     }
   }
 
+  function renderPrivateTags(tags, privateTags) {
+  if (!elements.privateTagsPanel) {
+    return;
+  }
+
+  if (!tags.length) {
+    elements.privateTagsPanel.innerHTML =
+      '<span class="tag-empty">Nenhuma hashtag ativa encontrada.</span>';
+    return;
+  }
+
+  let html = "";
+
+  tags.forEach(function (item) {
+    const tag = item.tag;
+    const isPrivate = privateTags.includes(tag);
+
+    html +=
+      '<button type="button" class="tag-chip' +
+      (isPrivate ? " active" : "") +
+      '" data-private-tag="' +
+      escapeHtml(tag) +
+      '">#' +
+      escapeHtml(tag) +
+      (isPrivate ? " privada" : "") +
+      "</button>";
+  });
+
+  elements.privateTagsPanel.innerHTML = html;
+}
+
+
   function showToast(message) {
     if (!elements.toastContainer) {
       console.warn("toastContainer não encontrado.");
@@ -590,6 +649,32 @@ const TaskUI = (function () {
     }, 2600);
   }
 
+  function renderCompactTasks(tasks) {
+  if (!elements.allTasksGrouped) {
+    return;
+  }
+
+  if (!tasks.length) {
+    elements.allTasksGrouped.innerHTML =
+      '<div class="upcoming-card"><p class="task-description">Nenhuma atividade concluída encontrada.</p></div>';
+    return;
+  }
+
+  let html = "";
+
+  tasks.forEach(function (task) {
+    html += '<article class="upcoming-card">';
+    html += '<h3 class="upcoming-title">' + escapeHtml(task.title) + "</h3>";
+    html +=
+      '<div class="upcoming-date">' +
+      escapeHtml(formatDateRange(task)) +
+      "</div>";
+    html += "</article>";
+  });
+
+  elements.allTasksGrouped.innerHTML = html;
+}
+
   return {
     renderSummary: renderSummary,
     renderHashtags: renderHashtags,
@@ -603,6 +688,8 @@ const TaskUI = (function () {
     normalizeDate: normalizeDate,
     normalizeTime: normalizeTime,
     formatDateRange: formatDateRange,
-    formatSingleDate: formatSingleDate
+    formatSingleDate: formatSingleDate,
+    renderPrivateTags: renderPrivateTags,
+    renderCompactTasks: renderCompactTasks,
   };
 })();
