@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v2.2.0";
+const CACHE_VERSION = "v2.2.2";
 const STATIC_CACHE = `tasks-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `tasks-runtime-${CACHE_VERSION}`;
 
@@ -19,7 +19,7 @@ const APP_SHELL_URLS = [
   "./js/tasks-calendar.js",
   "./js/popup.js",
 
-  "./popup.html",
+  "./popup/novidades.html",
 
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -53,6 +53,11 @@ self.addEventListener("activate", function (event) {
     ])
   );
 });
+
+function isPopupRequest(requestUrl) {
+  const url = new URL(requestUrl);
+  return url.pathname.includes("/popup/");
+}
 
 function isGoogleScriptRequest(requestUrl) {
   return requestUrl.includes("script.google.com");
@@ -129,19 +134,24 @@ self.addEventListener("fetch", function (event) {
     return;
   }
 
-  if (isNavigationRequest(request)) {
-    event.respondWith(
-      caches.match("./index.html").then(function (cachedShell) {
-        return (
-          cachedShell ||
-          fetch(request).catch(function () {
-            return caches.match("./index.html");
-          })
-        );
-      })
-    );
-    return;
-  }
+  if (isPopupRequest(url)) {
+  event.respondWith(networkFirst(request));
+  return;
+}
+
+if (isNavigationRequest(request)) {
+  event.respondWith(
+    caches.match("./index.html").then(function (cachedShell) {
+      return (
+        cachedShell ||
+        fetch(request).catch(function () {
+          return caches.match("./index.html");
+        })
+      );
+    })
+  );
+  return;
+}
 
   event.respondWith(staleWhileRevalidate(request));
 });

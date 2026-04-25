@@ -1,8 +1,8 @@
 const PopupNews = (function () {
   const CONFIG = {
-    popupId: "v.2.1.3",
+    popupId: "v.2.2.2",
     enabled: true,
-    delayMs: 600
+    delayMs: 400
   };
 
   const STORAGE_KEY = "popup_seen_ids";
