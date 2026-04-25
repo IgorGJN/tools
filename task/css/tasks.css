@@ -2012,20 +2012,15 @@ textarea {
 }
 
 
-
-.icon-home-btn {
-  padding: 4px;
-}
-
 .icon-home-btn img {
-  width: 28px;
-  height: 28px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
 }
 
 .icon-home-btn {
-  width: 24px;
-  height: 24px;
+  width: 50px;
+  height: 50px;
   padding: 0;
   display: grid;
   place-items: center;

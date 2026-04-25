@@ -98,6 +98,8 @@ const App = (function () {
     settingsBtn: document.getElementById("settingsBtn"),
     settingsPanel: document.getElementById("screen-settings"),
     privateTagsPanel: document.getElementById("privateTagsPanel"),
+
+    
   };
 
   function getAuthStorage() {

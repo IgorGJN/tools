@@ -4,6 +4,7 @@ const TaskStore = (function () {
   const LAST_SYNC_KEY = "tasks_tool_last_sync_v1";
   const PRIVATE_TAG = "privado";
   const PRIVATE_TAGS = ["privado", "🐝", "pastoreio"];
+  const SHARE_TAGS = ["compartilhar", "publico"];
   const PRIVATE_TAGS_STORAGE_KEY = "tasks_private_tags_v1";
 
   function clone(value) {
@@ -681,26 +682,27 @@ function togglePrivateTag(tag) {
   });
 }
 
-  function isTaskVisibleForUser(task, username, visibility) {
-    const user = String(username || "").trim().toLowerCase();
-    if (!user || task.deleted) {
-      return false;
-    }
+ function isTaskVisibleForUser(task, username, visibility) {
+  const user = String(username || "").trim().toLowerCase();
 
-    const owner = String(task.owner || "").trim().toLowerCase();
-    const isMine = owner === user;
-    const isPrivate = hasPrivateTag(task);
-
-    if (visibility === "mine") {
-      return isMine;
-    }
-
-    if (visibility === "shared") {
-  return !isMine && !isPrivate && !task.completed;
-}
-
-    return isMine || (!isMine && !isPrivate);
+  if (!user || task.deleted) {
+    return false;
   }
+
+  const owner = String(task.owner || "").trim().toLowerCase();
+  const isMine = owner === user;
+  const isShared = hasShareTag(task);
+
+  if (visibility === "mine") {
+    return isMine;
+  }
+
+  if (visibility === "shared") {
+    return !isMine && isShared && !task.completed;
+  }
+
+  return isMine || (!isMine && isShared);
+}
 
   function filterTasks(tasks, filters) {
     const search = String(filters.search || "").trim().toLowerCase();
@@ -828,6 +830,16 @@ function togglePrivateTag(tag) {
     });
   }
 
+  function hasShareTag(task) {
+  if (!Array.isArray(task.hashtags)) {
+    return false;
+  }
+
+  return task.hashtags.some(function (tag) {
+    return SHARE_TAGS.includes(tag);
+  });
+}
+
   return {
     load: load,
     save: save,
@@ -856,6 +868,7 @@ function togglePrivateTag(tag) {
     getPrivateTags: getPrivateTags,
     savePrivateTags: savePrivateTags,
     togglePrivateTag: togglePrivateTag,
-    PRIVATE_TAG: PRIVATE_TAG
+    PRIVATE_TAG: PRIVATE_TAG,
+    hasShareTag: hasShareTag,
   };
 })();
