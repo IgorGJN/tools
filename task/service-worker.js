@@ -1,4 +1,4 @@
-const CACHE_VERSION = "v2.2.2";
+const CACHE_VERSION = "v2.2.3";
 const STATIC_CACHE = `tasks-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `tasks-runtime-${CACHE_VERSION}`;
 
@@ -23,7 +23,10 @@ const APP_SHELL_URLS = [
 
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/icon.svg"
+  "./icons/icon.svg",
+
+  "./icons/users/igor.png",
+  "./icons/users/maria.png",
 ];
 
 self.addEventListener("install", function (event) {

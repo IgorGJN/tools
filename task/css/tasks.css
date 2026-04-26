@@ -2026,3 +2026,28 @@ textarea {
   place-items: center;
 }
 
+.topbar-profile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  width: 46px;
+  height: 46px;
+  overflow: hidden;
+}
+
+.user-photo-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.user-photo-logo.hidden {
+  display: none !important;
+}
+
+.topbar-profile-btn .topbar-home-title {
+  padding: 0 12px;
+}

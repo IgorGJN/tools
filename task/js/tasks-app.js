@@ -99,6 +99,9 @@ const App = (function () {
     settingsPanel: document.getElementById("screen-settings"),
     privateTagsPanel: document.getElementById("privateTagsPanel"),
 
+
+    userPhotoLogo: document.getElementById("userPhotoLogo"),
+    userPhotoFallback: document.getElementById("userPhotoFallback"),
     
   };
 
@@ -613,6 +616,7 @@ const App = (function () {
     toggleOverdue(state.overdueExpanded);
     toggleUpcoming(state.upcomingExpanded);
     renderUserSessionInfo();
+    renderUserPhotoLogo();
     updateLastSyncInfo();
   }
 
@@ -1091,6 +1095,29 @@ const App = (function () {
     }
   }
 
+  function renderUserPhotoLogo() {
+  if (!refs.userPhotoLogo || !refs.userPhotoFallback) return;
+
+  const username = String((state.user && state.user.username) || "").trim().toLowerCase();
+
+  if (!username) {
+    refs.userPhotoLogo.classList.add("hidden");
+    refs.userPhotoLogo.removeAttribute("src");
+    refs.userPhotoFallback.classList.remove("hidden");
+    return;
+  }
+
+  refs.userPhotoLogo.src = "./icons/users/" + username + ".png";
+  refs.userPhotoLogo.classList.remove("hidden");
+  refs.userPhotoFallback.classList.add("hidden");
+
+  refs.userPhotoLogo.onerror = function () {
+    refs.userPhotoLogo.classList.add("hidden");
+    refs.userPhotoLogo.removeAttribute("src");
+    refs.userPhotoFallback.classList.remove("hidden");
+  };
+}
+
   async function bootstrapAuth() {
     const savedAuth = getAuthStorage();
 
@@ -1432,3 +1459,4 @@ function updateThemeIcon() {
 
   btn.textContent = labels[current] || "🎨";
 }
+
