@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Bloco de Notas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="./css/notes.css" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#7c9cff" />
+
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+</head>
+
+<body>
+  <main class="notes-shell">
+    <header class="notes-topbar">
+      <div class="notes-title-block">
+        <p class="eyebrow">Anotações</p>
+        <h1>Bloco de notas</h1>
+        <p id="notesSyncInfo" class="sync-info">Sincronização: local</p>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="syncNotesBtn" class="icon-action-btn" type="button" aria-label="Sincronizar notas">
+          ↻
+        </button>
+
+        <button id="closeNotesBtn" class="close-btn" type="button">
+          Fechar
+        </button>
+      </div>
+    </header>
+
+    <section class="notes-toolbar">
+      <div class="field search-field">
+        <label for="notesSearchInput">Buscar notas</label>
+        <input id="notesSearchInput" type="text" placeholder="Buscar por título, conteúdo ou hashtag" />
+      </div>
+
+      <button id="newNoteBtn" class="btn btn-primary new-note-main-btn" type="button">
+        + Nova nota
+      </button>
+    </section>
+
+    <section class="tags-section">
+      <div class="tags-title-row">
+        <span>Hashtags</span>
+        <button id="clearTagFilterBtn" class="small-link-btn" type="button">Limpar filtro</button>
+      </div>
+
+      <div id="notesTagsPanel" class="tags-panel"></div>
+    </section>
+
+    <section class="notes-layout">
+      <section class="notes-list-section">
+        <div class="notes-list-header">
+          <div>
+            <h2>Minhas notas</h2>
+            <p id="notesCountLabel">0 notas</p>
+          </div>
+
+          <div class="view-hint">Toque para abrir</div>
+        </div>
+
+        <div id="notesList" class="notes-grid"></div>
+      </section>
+
+      <section id="noteEditorPanel" class="notes-editor-panel hidden">
+        <div class="editor-card">
+          <div class="editor-header">
+            <div>
+              <p class="eyebrow compact">Editor</p>
+              <h2 id="editorTitle">Nova nota</h2>
+            </div>
+
+            <div class="editor-header-actions">
+              <button id="favoriteNoteBtn" class="icon-action-btn" type="button" aria-label="Favoritar nota">
+                ☆
+              </button>
+
+              <button id="closeEditorBtn" class="icon-action-btn mobile-only" type="button" aria-label="Fechar editor">
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="noteTitle">Título</label>
+            <input id="noteTitle" type="text" maxlength="120" placeholder="Título da nota" />
+          </div>
+
+          <div class="field">
+            <label for="noteHashtags">Hashtags</label>
+            <input id="noteHashtags" type="text" placeholder="#ideia, #trabalho, #pessoal" />
+            <small>Use espaço ou vírgula. A primeira hashtag define a cor do card.</small>
+          </div>
+
+          <div class="field grow">
+            <label for="noteContent">Conteúdo</label>
+            <textarea id="noteContent" placeholder="Escreva sua nota aqui..."></textarea>
+          </div>
+
+          <div class="editor-actions">
+            <button id="deleteNoteBtn" class="btn btn-danger" type="button">Excluir</button>
+            <button id="saveNoteBtn" class="btn btn-primary" type="button">Salvar</button>
+          </div>
+
+          <p id="noteStatus" class="save-status">Pronto.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="./js/tasks-sync.js"></script>
+  <script src="./js/notes.js"></script>
+</body>
+</html>

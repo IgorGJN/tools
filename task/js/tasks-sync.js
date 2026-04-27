@@ -1,4 +1,4 @@
-const TaskSync = (function () {
+window.TaskSync = (function () {
   const WEB_APP_URL =
     "https://script.google.com/macros/s/AKfycbxV6lPXjSzkjU9S_bXQ_RKHpwQLaHdO2Rn2IB0I7f6d_9nHQa01XALpkedxopOzqsmM1A/exec";
 
@@ -238,6 +238,15 @@ const TaskSync = (function () {
     });
   }
 
+  function syncNotes(notes, auth) {
+  return postJson({
+    action: "syncNotes",
+    username: auth.username,
+    password: auth.password,
+    notes: notes
+  });
+}
+
   async function syncTasks(localTasks, auth) {
     const normalizedLocalTasks = (Array.isArray(localTasks) ? localTasks : []).map(
       TaskStore.normalizeTask
@@ -268,9 +277,11 @@ const TaskSync = (function () {
     validateSession: validateSession,
     fetchRemoteTasks: fetchRemoteTasks,
     syncTasks: syncTasks,
+    syncNotes: syncNotes,
     getSyncMeta: getSyncMeta,
     saveSyncMeta: saveSyncMeta,
     markPendingLocalChanges: markPendingLocalChanges,
-    mergeTaskCollections: mergeTaskCollections
+    mergeTaskCollections: mergeTaskCollections,
+    
   };
 })();

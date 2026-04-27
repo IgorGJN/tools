@@ -102,6 +102,8 @@ const App = (function () {
 
     userPhotoLogo: document.getElementById("userPhotoLogo"),
     userPhotoFallback: document.getElementById("userPhotoFallback"),
+
+    fabNotes: document.getElementById("fabNotes"),
     
   };
 
@@ -852,6 +854,13 @@ const App = (function () {
 
     showScreen("settings");
   });
+
+  if (refs.fabNotes) {
+  refs.fabNotes.addEventListener("click", function () {
+    window.location.href = "./notes.html";
+  });
+}
+
 }
 
     if (refs.fabAll) {
