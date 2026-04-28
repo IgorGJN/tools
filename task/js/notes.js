@@ -211,59 +211,63 @@ const NotesApp = (function () {
   }
 
   function getVisibleNotes() {
-    const search = state.search.trim().toLowerCase();
-    const tag = state.tag;
+  const search = state.search.trim().toLowerCase();
+  const tag = state.tag;
+  const currentUser = getCurrentUsername();
 
-    return state.notes
-      .filter(function (note) {
-        if (note.deleted) return false;
+  return state.notes
+    .filter(function (note) {
+      if (note.deleted) return false;
+      if (!currentUser) return false;
+      if (!isNoteFromCurrentUser(note)) return false;
 
-        const joinedText = [
-          note.title,
-          note.content,
-          Array.isArray(note.hashtags) ? note.hashtags.join(" ") : ""
-        ]
-          .join(" ")
-          .toLowerCase();
+      const joinedText = [
+        note.title,
+        note.content,
+        Array.isArray(note.hashtags) ? note.hashtags.join(" ") : ""
+      ]
+        .join(" ")
+        .toLowerCase();
 
-        const matchesSearch = !search || joinedText.includes(search);
-        const matchesTag = !tag || note.hashtags.includes(tag);
+      const matchesSearch = !search || joinedText.includes(search);
+      const matchesTag = !tag || note.hashtags.includes(tag);
 
-        return matchesSearch && matchesTag;
-      })
-      .sort(function (a, b) {
-        if (a.favorite !== b.favorite) {
-          return a.favorite ? -1 : 1;
-        }
+      return matchesSearch && matchesTag;
+    })
+    .sort(function (a, b) {
+      if (a.favorite !== b.favorite) {
+        return a.favorite ? -1 : 1;
+      }
 
-        return (
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        );
-      });
-  }
+      return (
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+    });
+}
 
   function getAllTags() {
-    const counts = {};
+  const counts = {};
 
-    state.notes.forEach(function (note) {
-      if (note.deleted) return;
+  state.notes.forEach(function (note) {
+    if (note.deleted) return;
+    if (!isNoteFromCurrentUser(note)) return;
 
-      note.hashtags.forEach(function (tag) {
-        counts[tag] = (counts[tag] || 0) + 1;
-      });
+    note.hashtags.forEach(function (tag) {
+      counts[tag] = (counts[tag] || 0) + 1;
     });
+  });
 
-    return Object.keys(counts)
-      .map(function (tag) {
-        return {
-          tag: tag,
-          count: counts[tag]
-        };
-      })
-      .sort(function (a, b) {
-        return b.count - a.count || a.tag.localeCompare(b.tag);
-      });
-  }
+  return Object.keys(counts)
+    .map(function (tag) {
+      return {
+        tag: tag,
+        count: counts[tag]
+      };
+    })
+    .sort(function (a, b) {
+      return b.count - a.count || a.tag.localeCompare(b.tag);
+    });
+}
 
   function hashString(value) {
     const text = String(value || "default");
@@ -648,6 +652,9 @@ const NotesApp = (function () {
         result && Array.isArray(result.notes) ? result.notes : [];
 
       state.notes = mergeNotes(state.notes, remoteNotes);
+      state.notes = state.notes.filter(function (note) {
+  return isNoteFromCurrentUser(note);
+});
       saveNotes({ markPending: false });
 
       markPendingSync(false);
@@ -793,6 +800,17 @@ const NotesApp = (function () {
       }
     });
   }
+
+  function isNoteFromCurrentUser(note) {
+  const currentUser = getCurrentUsername();
+  const owner = String(note.owner || "").trim().toLowerCase();
+
+  if (!currentUser) {
+    return false;
+  }
+
+  return owner === currentUser;
+}
 
   function init() {
     applySavedTheme();
